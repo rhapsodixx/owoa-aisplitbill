@@ -8,14 +8,14 @@
 
 **Owner**: Product Agent / Infra Agent
 
-- [ ] **Stack Finalization**:
-  - [ ] Confirm `agents.md` has concrete values (not placeholders) for Frontend (e.g., SvelteKit/Next.js), UI (e.g., Shadcn), Backend, etc.
-  - [ ] Verify `.env` template matches `requirements.md` (OPENROUTER_API_KEY, etc.).
-- [ ] **Project Setup**:
-  - [ ] Initialize git repository.
-  - [ ] specific framework scaffolding (based on locked stack).
-  - [ ] Install defined UI library (e.g., Shadcn, Tailwind).
-  - [ ] Configure `requirements.md` as context for all future prompts.
+- [x] **Stack Finalization**:
+  - [x] Confirm `agents.md` has concrete values (not placeholders) for Frontend (e.g., SvelteKit/Next.js), UI (e.g., Shadcn), Backend, etc.
+  - [x] Verify `.env` template matches `requirements.md` (OPENROUTER_API_KEY, etc.).
+- [x] **Project Setup**:
+  - [x] Initialize git repository.
+  - [x] specific framework scaffolding (based on locked stack).
+  - [x] Install defined UI library (e.g., Shadcn, Tailwind).
+  - [x] Configure `requirements.md` as context for all future prompts.
 
 ## Phase 1: Core Infrastructure & Navigation
 

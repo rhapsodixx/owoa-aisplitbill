@@ -10,12 +10,12 @@ AUTHORITATIVE DOCS (priority order)
 If any instruction conflicts with requirements.md: STOP and surface the conflict.
 
 LOCKED STACK (NO SUBSTITUTIONS)
-- [Frontend Technology]
-- [Backend Technology]
-- [Database]
-- [Deployment Platform]
-- [Testing Framework]
-Forbidden: [List of forbidden technologies]
+- SvelteKit (TypeScript)
+- TailwindCSS + Shadcn-Svelte
+- Vercel (Deployment)
+- Playwright + Vitest
+- OpenRouter API
+Forbidden: [jQuery, Bootstrap, PHP, Python Backend]
 
 ANTI-GRAVITY EXECUTION MODE
 - Prefer small, verifiable changes over large refactors.
@@ -69,22 +69,22 @@ Agents are **strictly limited** to the following stack.
 
 ### Application
 
-| Layer              | Technology                   |
-| ------------------ | ---------------------------- |
-| Frontend           | [Frontend Framework/Library] |
-| UI Library         | [UI Library]                 |
-| Backend            | [Backend Framework/Runtime]  |
-| Auth               | [Authentication Provider]    |
-| Runtime            | [Runtime Environment]        |
-| Database           | [Database Technology]        |
-| Deployment         | [Deployment Platform]        |
-| Environment config | [Configuration Method]       |
+| Layer              | Technology                            |
+| ------------------ | ------------------------------------- |
+| Frontend           | SvelteKit (TypeScript)                |
+| UI Library         | TailwindCSS + Shadcn-Svelte           |
+| Backend            | SvelteKit Server Routes               |
+| Auth               | None (No Auth required per non-goals) |
+| Runtime            | Node.js 20+                           |
+| Database           | None (Stateless)                      |
+| Deployment         | Vercel                                |
+| Environment config | .env (local) / Vercel Env (prod)      |
 
 ### Testing
 
 | Category         | Tool                          |
 | ---------------- | ----------------------------- |
-| E2E / UI         | [E2E Testing Tool]            |
+| E2E / UI         | Playwright                    |
 | Behavioral specs | Gherkin (Given / When / Then) |
 
 ### Explicitly Forbidden
