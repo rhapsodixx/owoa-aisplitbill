@@ -51,33 +51,33 @@
 
 **Owner**: Backend Agent
 
-- [ ] **API Endpoint**: `POST /api/split-bill` (or similar)
-- [ ] **Integration - OpenRouter**:
-  - [ ] Implement client for OpenRouter.
-  - [ ] Config: Read `OPENROUTER_MODEL_DEFAULT` and `FALLBACK` from env.
-- [ ] **Prompt Engineering**:
-  - [ ] Construct System Prompt based on `requirements.md` (Calculation Rules).
-  - [ ] Inject OCR data (Image processing) + User Inputs.
-  - [ ] **Crucial**: Ensure output is strictly JSON structure matching the frontend needs.
-- [ ] **Business Logic**:
-  - [ ] Handle failures (retries or fallback model).
-  - [ ] Calculate/Distribute Tax & Service fees proportionally (as per requirements).
+- [x] **API Endpoint**: `POST /api/split-bill` (or similar)
+- [x] **Integration - OpenRouter**:
+  - [x] Implement client for OpenRouter.
+  - [x] Config: Read `OPENROUTER_MODEL_DEFAULT` and `FALLBACK` from env.
+- [x] **Prompt Engineering**:
+  - [x] Construct System Prompt based on `requirements.md` (Calculation Rules).
+  - [x] Inject OCR data (Image processing) + User Inputs.
+  - [x] **Crucial**: Ensure output is strictly JSON structure matching the frontend needs.
+- [x] **Business Logic**:
+  - [x] Handle failures (retries or fallback model).
+  - [x] Calculate/Distribute Tax & Service fees proportionally (as per requirements).
 
 ## Phase 4: Feature - Result Page (Page 2)
 
 **Owner**: Frontend Agent
 
-- [ ] **UI Implementation**:
-  - [ ] **Skeleton/Loading State** (while waiting for AI).
-  - [ ] **Person Cards**:
-    - [ ] Render Name/ID.
-    - [ ] List Food Items (Name + Price).
-    - [ ] List Drink Items.
-    - [ ] Show Subtotal, Tax, Service Fee, Final Total.
-  - [ ] **Grand Total Summary**.
-- [ ] **Error Handling**:
-  - [ ] Show friendly error if AI fails or returns malformed data.
-  - [ ] "Try Again" button navigating back to Page 1.
+- [x] **UI Implementation**:
+  - [x] **Skeleton/Loading State** (while waiting for AI).
+  - [x] **Person Cards**:
+    - [x] Render Name/ID.
+    - [x] List Food Items (Name + Price).
+    - [x] List Drink Items.
+    - [x] Show Subtotal, Tax, Service Fee, Final Total.
+  - [x] **Grand Total Summary**.
+- [x] **Error Handling**:
+  - [x] Show friendly error if AI fails or returns malformed data.
+  - [x] "Try Again" button navigating back to Page 1.
 
 ## Phase 5: Testing & Verification (QA Gate)
 

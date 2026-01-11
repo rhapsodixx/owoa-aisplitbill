@@ -99,21 +99,42 @@
                 <div class="h-px w-full bg-white/5"></div>
 
                 <!-- Items List -->
-                <div class="space-y-2">
-                  {#each person.items as item}
-                    <div
-                      class="flex justify-between items-center text-muted-foreground"
-                    >
-                      <div class="flex items-center gap-2">
-                        <!-- Simple icon logic: checking if drink or food is hard without AI tagging, defaulting to dot or generic -->
-                        <div
-                          class="h-1.5 w-1.5 rounded-full bg-purple-400/50"
-                        ></div>
-                        <span>{item.name}</span>
+                <div class="space-y-3">
+                  {#if person.foodItems?.length > 0}
+                    <div class="space-y-1">
+                      <div
+                        class="flex items-center gap-2 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider"
+                      >
+                        <Utensils class="h-3 w-3" /> <span>Food</span>
                       </div>
-                      <span>{formatCurrency(item.price)}</span>
+                      {#each person.foodItems as item}
+                        <div
+                          class="flex justify-between items-center text-muted-foreground pl-5"
+                        >
+                          <span>{item.name}</span>
+                          <span>{formatCurrency(item.price)}</span>
+                        </div>
+                      {/each}
                     </div>
-                  {/each}
+                  {/if}
+
+                  {#if person.drinkItems?.length > 0}
+                    <div class="space-y-1">
+                      <div
+                        class="flex items-center gap-2 text-xs font-semibold text-muted-foreground/80 uppercase tracking-wider"
+                      >
+                        <Wine class="h-3 w-3" /> <span>Drinks</span>
+                      </div>
+                      {#each person.drinkItems as item}
+                        <div
+                          class="flex justify-between items-center text-muted-foreground pl-5"
+                        >
+                          <span>{item.name}</span>
+                          <span>{formatCurrency(item.price)}</span>
+                        </div>
+                      {/each}
+                    </div>
+                  {/if}
                 </div>
 
                 <!-- Tax & Fees -->

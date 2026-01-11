@@ -20,17 +20,34 @@
   $: isValid = file !== null && peopleCount !== null && peopleCount > 0;
 
   async function handleSubmit() {
-    if (!isValid) return;
+    if (!isValid || !file) return;
 
     isSubmitting = true;
     try {
-      // Todo: Integrate API in Phase 3
-      // For now, simulate upload and redirect
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      // console.log({ file, peopleCount, instructions });
-      goto("/result");
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("peopleCount", peopleCount!.toString());
+      formData.append("instructions", instructions);
+
+      const response = await fetch("/api/split-bill", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to process receipt");
+      }
+
+      // Store result and navigate
+      sessionStorage.setItem("splitBillResult", JSON.stringify(data));
+      await goto("/result");
     } catch (error) {
       console.error(error);
+      alert(
+        error instanceof Error ? error.message : "An unexpected error occurred",
+      );
     } finally {
       isSubmitting = false;
     }
