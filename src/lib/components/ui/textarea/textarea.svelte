@@ -20,4 +20,4 @@
   on:input
   on:focus
   on:blur
-/>
+></textarea>
