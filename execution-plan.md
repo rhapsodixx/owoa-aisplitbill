@@ -21,31 +21,31 @@
 
 **Owner**: Frontend Agent / Infra Agent
 
-- [ ] **Routing Setup**:
-  - [ ] Create Page 1 route: `/` (Home/Input).
-  - [ ] Create Page 2 route: `/result` (or dynamic route if passing ID).
-- [ ] **Global Layout**:
-  - [ ] Implement Mobile-first layout container (max-width, centered).
-  - [ ] Add Global Error Boundary.
+- [x] **Routing Setup**:
+  - [x] Create Page 1 route: `/` (Home/Input).
+  - [x] Create Page 2 route: `/result` (or dynamic route if passing ID).
+- [x] **Global Layout**:
+  - [x] Implement Mobile-first layout container (max-width, centered).
+  - [x] Add Global Error Boundary.
 
 ## Phase 2: Feature - Bill Input Page (Page 1)
 
 **Owner**: Frontend Agent
 
-- [ ] **UI Implementation**:
-  - [ ] **Receipt Upload Component**:
-    - [ ] File input (JPG, PNG, WEBP).
-    - [ ] Preview image processing.
-  - [ ] **Number of People Input**:
-    - [ ] Number field (min 1).
-    - [ ] Validation (Required).
-  - [ ] **Extra Instructions Input**:
-    - [ ] Textarea (Optional).
-  - [ ] **Submit Button**:
-    - [ ] State loading handling.
-    - [ ] Disabled state if invalid.
-- [ ] **Validation Logic**:
-  - [ ] Prevent navigation if no image or invalid people count.
+- [x] **UI Implementation**:
+  - [x] **Receipt Upload Component**:
+    - [x] File input (JPG, PNG, WEBP).
+    - [x] Preview image processing.
+  - [x] **Number of People Input**:
+    - [x] Number field (min 1).
+    - [x] Validation (Required).
+  - [x] **Extra Instructions Input**:
+    - [x] Textarea (Optional).
+  - [x] **Submit Button**:
+    - [x] State loading handling.
+    - [x] Disabled state if invalid.
+- [x] **Validation Logic**:
+  - [x] Prevent navigation if no image or invalid people count.
 
 ## Phase 3: Backend - AI Logic & API
 
