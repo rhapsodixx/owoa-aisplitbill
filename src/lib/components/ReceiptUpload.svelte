@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Label } from "$lib/components/ui/label";
-  import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
   import { createEventDispatcher } from "svelte";
   import { ImagePlus, X } from "lucide-svelte";
@@ -10,19 +9,20 @@
 
   const dispatch = createEventDispatcher();
 
-  function handleFileChange(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const selectedFile = target.files?.[0];
+  // For bind:files
+  let files: FileList | null = null;
 
-    if (selectedFile) {
-      file = selectedFile;
-      previewUrl = URL.createObjectURL(selectedFile);
-      dispatch("change", { file });
-    }
+  // React to files change from bind:files (Playwright compatible)
+  $: if (files && files.length > 0) {
+    const selectedFile = files[0];
+    file = selectedFile;
+    previewUrl = URL.createObjectURL(selectedFile);
+    dispatch("change", { file });
   }
 
   function clearFile() {
     file = null;
+    files = null;
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       previewUrl = null;
@@ -54,12 +54,12 @@
     <div
       class="relative flex min-h-[150px] w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/25 hover:bg-accent/50"
     >
-      <Input
+      <input
         id="receipt"
         type="file"
         accept="image/png, image/jpeg, image/webp"
         class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-        on:change={handleFileChange}
+        bind:files
       />
       <div
         class="flex flex-col items-center justify-center space-y-2 text-center text-sm text-muted-foreground"
