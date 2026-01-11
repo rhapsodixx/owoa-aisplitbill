@@ -8,7 +8,6 @@
     CardTitle,
   } from "$lib/components/ui/card";
   import { Button } from "$lib/components/ui/button";
-  import { Separator } from "bits-ui"; // Using simple div for separator if bits-ui is heavy, but we have it installed.
   import {
     Utensils,
     Wine,
