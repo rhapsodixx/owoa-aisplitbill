@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 .serena/
 
 .playwright-mcp/
+
+# Production build output
+build/

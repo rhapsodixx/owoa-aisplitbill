@@ -56,7 +56,7 @@ Follow these steps to run the project locally:
 
 2. **Install dependencies**:
    ```bash
-   pnpm install
+   npm install
    ```
 
 3. **Set up environment variables**:
@@ -68,7 +68,7 @@ Follow these steps to run the project locally:
 
 4. **Run the development server**:
    ```bash
-   pnpm dev
+   npm run dev
    ```
    Open [http://localhost:5173](http://localhost:5173) in your browser.
 
@@ -106,7 +106,7 @@ This application is optimized for deployment on **Render** as a Node.js Web Serv
 2. **Runtime**: Choose **Node.js**.
 3. **Build Command**:
    ```bash
-   pnpm install && pnpm build
+   npm install && npm run build
    ```
 4. **Start Command**:
    ```bash
