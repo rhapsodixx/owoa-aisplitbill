@@ -27,6 +27,8 @@ export const load: PageServerLoad = async ({ params }) => {
         receiptImageUrl: data.receipt_image_url,
         currency: data.currency,
         createdAt: data.created_at,
-        resultId: id
+        resultId: id,
+        visibility: data.visibility || 'public',
+        isPrivate: (data.visibility === 'private')
     };
 };

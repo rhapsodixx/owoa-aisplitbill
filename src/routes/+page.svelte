@@ -19,15 +19,32 @@
     AlertTitle,
   } from "$lib/components/ui/alert";
   import { Separator } from "$lib/components/ui/separator";
-  import { Receipt, Loader2, AlertCircle, Sparkles } from "lucide-svelte";
+  import {
+    Receipt,
+    Loader2,
+    AlertCircle,
+    Sparkles,
+    Lock,
+    Globe,
+    Eye,
+    EyeOff,
+  } from "lucide-svelte";
 
   let file: File | null = null;
   let peopleCount: number | null = null;
   let instructions: string = "";
   let isSubmitting = false;
   let errorMessage: string | null = null;
+  let visibility: "public" | "private" = "public";
+  let passcode: string = "";
+  let showPasscode = false;
+  let passcodeError: string | null = null;
 
-  $: isValid = file !== null && peopleCount !== null && peopleCount > 0;
+  $: isPasscodeValid =
+    visibility === "public" ||
+    (passcode.trim().length > 0 && passcode.trim().length <= 8);
+  $: isValid =
+    file !== null && peopleCount !== null && peopleCount > 0 && isPasscodeValid;
 
   async function handleSubmit() {
     if (!isValid || !file) return;
@@ -36,10 +53,28 @@
     errorMessage = null;
 
     try {
+      // Validate passcode
+      if (visibility === "private") {
+        const trimmed = passcode.trim();
+        if (!trimmed) {
+          passcodeError = "Passcode is required for private results";
+          return;
+        }
+        if (trimmed.length > 8) {
+          passcodeError = "Passcode must be 8 characters or less";
+          return;
+        }
+        passcodeError = null;
+      }
+
       const formData = new FormData();
       formData.append("image", file);
       formData.append("peopleCount", peopleCount!.toString());
       formData.append("instructions", instructions);
+      formData.append("visibility", visibility);
+      if (visibility === "private") {
+        formData.append("passcode", passcode.trim());
+      }
 
       const response = await fetch("/api/split-bill", {
         method: "POST",
@@ -153,6 +188,73 @@
             <li>Charlie and Dana shared the ramen</li>
           </ul>
         </div>
+      </div>
+
+      <Separator />
+
+      <!-- Result Visibility -->
+      <div class="space-y-3">
+        <Label class="text-sm font-medium">Result Visibility</Label>
+        <div class="flex gap-2">
+          <Button
+            variant={visibility === "public" ? "default" : "outline"}
+            class="flex-1 gap-2"
+            on:click={() => {
+              visibility = "public";
+              passcodeError = null;
+            }}
+          >
+            <Globe class="h-4 w-4" />
+            Public
+          </Button>
+          <Button
+            variant={visibility === "private" ? "default" : "outline"}
+            class="flex-1 gap-2"
+            on:click={() => (visibility = "private")}
+          >
+            <Lock class="h-4 w-4" />
+            Private
+          </Button>
+        </div>
+        <p class="text-xs text-muted-foreground">
+          {#if visibility === "public"}
+            Anyone with the link can view the split result.
+          {:else}
+            A passcode will be required to view the split result.
+          {/if}
+        </p>
+
+        <!-- Conditional Passcode Field -->
+        {#if visibility === "private"}
+          <div class="space-y-2 pt-2">
+            <Label for="passcode" class="text-sm font-medium">Passcode</Label>
+            <div class="relative">
+              <Input
+                id="passcode"
+                type={showPasscode ? "text" : "password"}
+                maxlength={8}
+                placeholder="Enter passcode"
+                bind:value={passcode}
+                class="h-11 pr-10"
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                on:click={() => (showPasscode = !showPasscode)}
+              >
+                {#if showPasscode}
+                  <EyeOff class="h-4 w-4" />
+                {:else}
+                  <Eye class="h-4 w-4" />
+                {/if}
+              </button>
+            </div>
+            <p class="text-xs text-muted-foreground">Up to 8 characters</p>
+            {#if passcodeError}
+              <p class="text-xs text-destructive">{passcodeError}</p>
+            {/if}
+          </div>
+        {/if}
       </div>
     </CardContent>
 

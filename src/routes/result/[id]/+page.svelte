@@ -18,13 +18,31 @@
         Copy,
         Check,
         Image as ImageIcon,
+        Lock,
+        Eye,
+        EyeOff,
+        Loader2,
     } from "lucide-svelte";
     import { cn } from "$lib/utils";
     import { toast } from "svelte-sonner";
+    import { Input } from "$lib/components/ui/input";
+    import { Label } from "$lib/components/ui/label";
+    import {
+        Alert,
+        AlertDescription,
+        AlertTitle,
+    } from "$lib/components/ui/alert";
 
     export let data;
 
-    const { result, receiptImageUrl, resultId } = data;
+    const { result, receiptImageUrl, resultId, isPrivate } = data;
+
+    // Access control state
+    let isUnlocked = !isPrivate; // Public results are unlocked by default
+    let passcodeInput = "";
+    let showPasscode = false;
+    let passcodeError: string | null = null;
+    let isVerifying = false;
 
     const avatarColors = [
         "bg-red-500",
@@ -87,7 +105,9 @@
             await navigator.clipboard.writeText(url);
             copied = true;
             toast.success("Link copied to clipboard!", {
-                description: "Share this link with your friends.",
+                description: isPrivate
+                    ? "The recipient will need the passcode to view."
+                    : "Share this link with your friends.",
             });
 
             // Reset copied state after 2 seconds
@@ -100,6 +120,48 @@
             });
         }
     }
+
+    async function verifyPasscode() {
+        if (!passcodeInput.trim()) {
+            passcodeError = "Please enter a passcode";
+            return;
+        }
+
+        isVerifying = true;
+        passcodeError = null;
+
+        try {
+            const response = await fetch("/api/verify-passcode", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: resultId,
+                    passcode: passcodeInput.trim(),
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                isUnlocked = true;
+                toast.success("Access granted!");
+            } else {
+                passcodeError = result.error || "Incorrect passcode";
+            }
+        } catch (err) {
+            passcodeError = "Failed to verify passcode. Please try again.";
+        } finally {
+            isVerifying = false;
+        }
+    }
+
+    function handlePasscodeKeydown(event: KeyboardEvent) {
+        if (event.key === "Enter") {
+            verifyPasscode();
+        }
+    }
 </script>
 
 <div class="flex min-h-[calc(100vh-4rem)] flex-col pb-32">
@@ -110,207 +172,291 @@
         <div
             class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10"
         >
-            <Calculator class="h-7 w-7 text-primary" />
+            {#if isPrivate && !isUnlocked}
+                <Lock class="h-7 w-7 text-primary" />
+            {:else}
+                <Calculator class="h-7 w-7 text-primary" />
+            {/if}
         </div>
         <div class="space-y-1">
             <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">
-                Split Results
+                {#if isPrivate && !isUnlocked}
+                    Protected Result
+                {:else}
+                    Split Results
+                {/if}
             </h1>
             <p class="text-sm text-muted-foreground">
-                Here's the detailed breakdown for each person.
+                {#if isPrivate && !isUnlocked}
+                    Enter the passcode to view this result.
+                {:else}
+                    Here's the detailed breakdown for each person.
+                {/if}
             </p>
         </div>
     </div>
 
-    <!-- Person Cards -->
-    <div class="space-y-4" in:fade={{ duration: 300 }}>
-        {#each people as person, i}
-            <div in:slide={{ delay: i * 80, duration: 250 }}>
-                <Card class="overflow-hidden transition-shadow hover:shadow-md">
-                    <CardHeader class="pb-3">
-                        <CardTitle class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <!-- Avatar -->
-                                <div
-                                    class={cn(
-                                        "flex h-10 w-10 items-center justify-center rounded-full text-white font-bold shadow-sm",
-                                        getAvatarColor(i),
-                                    )}
-                                >
-                                    {person.name.charAt(0).toUpperCase()}
-                                </div>
-                                <span class="text-lg font-semibold"
-                                    >{person.name}</span
-                                >
-                            </div>
-                            <span class="text-xl font-bold text-primary">
-                                {formatCurrency(person.total)}
-                            </span>
-                        </CardTitle>
-                    </CardHeader>
-
-                    <CardContent class="space-y-4 pt-0">
-                        <Separator />
-
-                        <!-- Items List -->
-                        <div class="space-y-4">
-                            <!-- Food Items -->
-                            {#if person.foodItems?.length > 0}
-                                <div class="space-y-2">
-                                    <div
-                                        class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                                    >
-                                        <Utensils class="h-3.5 w-3.5" />
-                                        <span>Food</span>
-                                    </div>
-                                    <div class="space-y-1.5 pl-5">
-                                        {#each person.foodItems as item}
-                                            <div
-                                                class="flex items-center justify-between text-sm"
-                                            >
-                                                <span class="text-foreground"
-                                                    >{item.name}</span
-                                                >
-                                                <span
-                                                    class="text-muted-foreground tabular-nums"
-                                                >
-                                                    {formatCurrency(item.price)}
-                                                </span>
-                                            </div>
-                                        {/each}
-                                    </div>
-                                </div>
-                            {/if}
-
-                            <!-- Drink Items -->
-                            {#if person.drinkItems?.length > 0}
-                                <div class="space-y-2">
-                                    <div
-                                        class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                                    >
-                                        <Wine class="h-3.5 w-3.5" />
-                                        <span>Drinks</span>
-                                    </div>
-                                    <div class="space-y-1.5 pl-5">
-                                        {#each person.drinkItems as item}
-                                            <div
-                                                class="flex items-center justify-between text-sm"
-                                            >
-                                                <span class="text-foreground"
-                                                    >{item.name}</span
-                                                >
-                                                <span
-                                                    class="text-muted-foreground tabular-nums"
-                                                >
-                                                    {formatCurrency(item.price)}
-                                                </span>
-                                            </div>
-                                        {/each}
-                                    </div>
-                                </div>
-                            {/if}
-                        </div>
-
-                        <!-- Summary Box -->
-                        <div class="rounded-lg bg-muted/50 p-3 space-y-1.5">
-                            <div
-                                class="flex justify-between text-xs text-muted-foreground"
-                            >
-                                <span>Subtotal</span>
-                                <span class="tabular-nums"
-                                    >{formatCurrency(person.subtotal)}</span
-                                >
-                            </div>
-                            <div
-                                class="flex justify-between text-xs text-muted-foreground"
-                            >
-                                <span>Tax</span>
-                                <span class="tabular-nums"
-                                    >{formatCurrency(person.tax)}</span
-                                >
-                            </div>
-                            <div
-                                class="flex justify-between text-xs text-muted-foreground"
-                            >
-                                <span>Service Fee</span>
-                                <span class="tabular-nums"
-                                    >{formatCurrency(person.serviceFee)}</span
-                                >
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        {/each}
-    </div>
-
-    <!-- Original Receipt Card -->
-    <div class="mt-6" in:fade={{ delay: 400, duration: 300 }}>
-        <Card>
-            <CardHeader class="pb-3">
-                <CardTitle class="flex items-center gap-2 text-base">
-                    <ImageIcon class="h-4 w-4" />
-                    Original Receipt
-                </CardTitle>
+    <!-- Passcode Prompt (for private results) -->
+    {#if isPrivate && !isUnlocked}
+        <Card class="mx-auto w-full max-w-sm">
+            <CardHeader>
+                <CardTitle class="text-lg">Enter Passcode</CardTitle>
             </CardHeader>
-            <CardContent>
-                <div class="overflow-hidden rounded-lg border bg-muted/30">
-                    <img
-                        src={receiptImageUrl}
-                        alt="Original receipt"
-                        class="w-full h-auto object-contain max-h-[500px]"
-                    />
+            <CardContent class="space-y-4">
+                <div class="space-y-2">
+                    <Label for="result-passcode">Passcode</Label>
+                    <div class="relative">
+                        <Input
+                            id="result-passcode"
+                            type={showPasscode ? "text" : "password"}
+                            maxlength={8}
+                            placeholder="Enter passcode"
+                            bind:value={passcodeInput}
+                            class="pr-10"
+                            disabled={isVerifying}
+                        />
+                        <button
+                            type="button"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            on:click={() => (showPasscode = !showPasscode)}
+                        >
+                            {#if showPasscode}
+                                <EyeOff class="h-4 w-4" />
+                            {:else}
+                                <Eye class="h-4 w-4" />
+                            {/if}
+                        </button>
+                    </div>
                 </div>
+
+                {#if passcodeError}
+                    <Alert variant="destructive">
+                        <AlertTitle>Error</AlertTitle>
+                        <AlertDescription>{passcodeError}</AlertDescription>
+                    </Alert>
+                {/if}
+
+                <Button
+                    class="w-full gap-2"
+                    on:click={verifyPasscode}
+                    disabled={isVerifying || !passcodeInput.trim()}
+                >
+                    {#if isVerifying}
+                        <Loader2 class="h-4 w-4 animate-spin" />
+                        Verifying...
+                    {:else}
+                        <Lock class="h-4 w-4" />
+                        Unlock Result
+                    {/if}
+                </Button>
             </CardContent>
         </Card>
-    </div>
+    {:else}
+        <!-- Person Cards -->
+        <div class="space-y-4" in:fade={{ duration: 300 }}>
+            {#each people as person, i}
+                <div in:slide={{ delay: i * 80, duration: 250 }}>
+                    <Card
+                        class="overflow-hidden transition-shadow hover:shadow-md"
+                    >
+                        <CardHeader class="pb-3">
+                            <CardTitle
+                                class="flex items-center justify-between"
+                            >
+                                <div class="flex items-center gap-3">
+                                    <!-- Avatar -->
+                                    <div
+                                        class={cn(
+                                            "flex h-10 w-10 items-center justify-center rounded-full text-white font-bold shadow-sm",
+                                            getAvatarColor(i),
+                                        )}
+                                    >
+                                        {person.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <span class="text-lg font-semibold"
+                                        >{person.name}</span
+                                    >
+                                </div>
+                                <span class="text-xl font-bold text-primary">
+                                    {formatCurrency(person.total)}
+                                </span>
+                            </CardTitle>
+                        </CardHeader>
 
-    <!-- Floating Bottom Bar -->
-    <div class="fixed bottom-0 left-0 right-0 z-50 p-4">
-        <div in:slide={{ duration: 300, delay: 400 }} class="mx-auto max-w-md">
-            <Card
-                class="border-border/50 bg-card/95 shadow-xl backdrop-blur-xl"
-            >
-                <CardHeader class="p-4">
-                    <div class="flex items-center justify-between">
-                        <div class="space-y-0.5">
-                            <p
-                                class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
-                            >
-                                Grand Total
-                            </p>
-                            <p class="text-2xl font-bold tracking-tight">
-                                {formatCurrency(grandTotal)}
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <Button
-                                variant="default"
-                                size="sm"
-                                class="gap-2"
-                                on:click={shareResult}
-                            >
-                                {#if copied}
-                                    <Check class="h-4 w-4" />
-                                    Copied!
-                                {:else}
-                                    <Share2 class="h-4 w-4" />
-                                    Share
+                        <CardContent class="space-y-4 pt-0">
+                            <Separator />
+
+                            <!-- Items List -->
+                            <div class="space-y-4">
+                                <!-- Food Items -->
+                                {#if person.foodItems?.length > 0}
+                                    <div class="space-y-2">
+                                        <div
+                                            class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                                        >
+                                            <Utensils class="h-3.5 w-3.5" />
+                                            <span>Food</span>
+                                        </div>
+                                        <div class="space-y-1.5 pl-5">
+                                            {#each person.foodItems as item}
+                                                <div
+                                                    class="flex items-center justify-between text-sm"
+                                                >
+                                                    <span
+                                                        class="text-foreground"
+                                                        >{item.name}</span
+                                                    >
+                                                    <span
+                                                        class="text-muted-foreground tabular-nums"
+                                                    >
+                                                        {formatCurrency(
+                                                            item.price,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    </div>
                                 {/if}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                class="h-10 w-10 rounded-full"
-                                on:click={goBack}
-                            >
-                                <ArrowLeft class="h-4 w-4" />
-                                <span class="sr-only">Go back</span>
-                            </Button>
-                        </div>
-                    </div>
+
+                                <!-- Drink Items -->
+                                {#if person.drinkItems?.length > 0}
+                                    <div class="space-y-2">
+                                        <div
+                                            class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                                        >
+                                            <Wine class="h-3.5 w-3.5" />
+                                            <span>Drinks</span>
+                                        </div>
+                                        <div class="space-y-1.5 pl-5">
+                                            {#each person.drinkItems as item}
+                                                <div
+                                                    class="flex items-center justify-between text-sm"
+                                                >
+                                                    <span
+                                                        class="text-foreground"
+                                                        >{item.name}</span
+                                                    >
+                                                    <span
+                                                        class="text-muted-foreground tabular-nums"
+                                                    >
+                                                        {formatCurrency(
+                                                            item.price,
+                                                        )}
+                                                    </span>
+                                                </div>
+                                            {/each}
+                                        </div>
+                                    </div>
+                                {/if}
+                            </div>
+
+                            <!-- Summary Box -->
+                            <div class="rounded-lg bg-muted/50 p-3 space-y-1.5">
+                                <div
+                                    class="flex justify-between text-xs text-muted-foreground"
+                                >
+                                    <span>Subtotal</span>
+                                    <span class="tabular-nums"
+                                        >{formatCurrency(person.subtotal)}</span
+                                    >
+                                </div>
+                                <div
+                                    class="flex justify-between text-xs text-muted-foreground"
+                                >
+                                    <span>Tax</span>
+                                    <span class="tabular-nums"
+                                        >{formatCurrency(person.tax)}</span
+                                    >
+                                </div>
+                                <div
+                                    class="flex justify-between text-xs text-muted-foreground"
+                                >
+                                    <span>Service Fee</span>
+                                    <span class="tabular-nums"
+                                        >{formatCurrency(
+                                            person.serviceFee,
+                                        )}</span
+                                    >
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            {/each}
+        </div>
+
+        <!-- Original Receipt Card -->
+        <div class="mt-6" in:fade={{ delay: 400, duration: 300 }}>
+            <Card>
+                <CardHeader class="pb-3">
+                    <CardTitle class="flex items-center gap-2 text-base">
+                        <ImageIcon class="h-4 w-4" />
+                        Original Receipt
+                    </CardTitle>
                 </CardHeader>
+                <CardContent>
+                    <div class="overflow-hidden rounded-lg border bg-muted/30">
+                        <img
+                            src={receiptImageUrl}
+                            alt="Original receipt"
+                            class="w-full h-auto object-contain max-h-[500px]"
+                        />
+                    </div>
+                </CardContent>
             </Card>
         </div>
-    </div>
+
+        <!-- Floating Bottom Bar -->
+        <div class="fixed bottom-0 left-0 right-0 z-50 p-4">
+            <div
+                in:slide={{ duration: 300, delay: 400 }}
+                class="mx-auto max-w-md"
+            >
+                <Card
+                    class="border-border/50 bg-card/95 shadow-xl backdrop-blur-xl"
+                >
+                    <CardHeader class="p-4">
+                        <div class="flex items-center justify-between">
+                            <div class="space-y-0.5">
+                                <p
+                                    class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                                >
+                                    Grand Total
+                                </p>
+                                <p class="text-2xl font-bold tracking-tight">
+                                    {formatCurrency(grandTotal)}
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <Button
+                                    variant="default"
+                                    size="sm"
+                                    class="gap-2"
+                                    on:click={shareResult}
+                                >
+                                    {#if copied}
+                                        <Check class="h-4 w-4" />
+                                        Copied!
+                                    {:else}
+                                        <Share2 class="h-4 w-4" />
+                                        Share
+                                    {/if}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    class="h-10 w-10 rounded-full"
+                                    on:click={goBack}
+                                >
+                                    <ArrowLeft class="h-4 w-4" />
+                                    <span class="sr-only">Go back</span>
+                                </Button>
+                            </div>
+                        </div>
+                    </CardHeader>
+                </Card>
+            </div>
+        </div>
+    {/if}
 </div>
