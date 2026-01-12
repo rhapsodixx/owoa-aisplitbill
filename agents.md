@@ -207,6 +207,7 @@ Implement API and business logic.
   - **Object Storage uploads** (receipt images)
   - **Public read access** (result retrieval by UUID)
 - Generate cryptographically random UUID v4 for each result
+- **Hash private result passcodes** before storage (server-side only)
 - Use `SUPABASE_SERVICE_ROLE_KEY` for writes (server-side only)
 
 **Non-Responsibilities**
