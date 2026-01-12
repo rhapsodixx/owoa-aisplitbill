@@ -4,7 +4,8 @@
 
   export let variant: ButtonVariant["variant"] = "default";
   export let size: ButtonVariant["size"] = "default";
-  export let className: string | undefined = undefined;
+  let className: string | undefined = undefined;
+  export { className as class };
   export let href: string | undefined = undefined;
   export let type: "button" | "submit" | "reset" = "button";
   export let disabled: boolean = false;

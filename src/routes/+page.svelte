@@ -149,9 +149,9 @@
         <div class="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
           <p class="mb-1.5 font-medium">Examples:</p>
           <ul class="list-inside list-disc space-y-0.5">
-            <li>Alice had the salad and iced tea</li>
-            <li>Bob only had the burger</li>
-            <li>Charlie and Dana shared the pizza</li>
+            <li>Budi had the bubur ayam and iced tea</li>
+            <li>Joko only had the lotek</li>
+            <li>Charlie and Dana shared the ramen</li>
           </ul>
         </div>
       </div>
@@ -159,8 +159,10 @@
 
     <CardFooter class="flex-col gap-3 pt-2">
       <Button
+        id="submit-aianalyze"
         size="lg"
-        class="w-full gap-2 text-base font-semibold"
+        variant="default"
+        class="w-full gap-2 text-base font-semibold shadow-lg transition-all hover:shadow-xl"
         disabled={!isValid || isSubmitting}
         on:click={handleSubmit}
       >
@@ -174,13 +176,17 @@
       </Button>
 
       {#if !isValid && !isSubmitting}
-        <p class="text-center text-xs text-muted-foreground">
-          {#if !file}
-            Upload a receipt to continue
-          {:else if !peopleCount || peopleCount <= 0}
-            Enter the number of people
-          {/if}
-        </p>
+        <Alert class="mt-2 border-primary/20 bg-primary/5 text-primary">
+          <AlertCircle class="h-4 w-4" />
+          <AlertTitle>Action Required</AlertTitle>
+          <AlertDescription>
+            {#if !file}
+              Upload a receipt to continue
+            {:else if !peopleCount || peopleCount <= 0}
+              Enter the number of people
+            {/if}
+          </AlertDescription>
+        </Alert>
       {/if}
     </CardFooter>
   </Card>
