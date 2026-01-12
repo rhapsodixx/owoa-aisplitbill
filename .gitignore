@@ -145,3 +145,5 @@ vite.config.ts.timestamp-*
 
 # Agent
 .serena/
+
+.playwright-mcp/
