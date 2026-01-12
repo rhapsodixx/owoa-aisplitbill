@@ -52,9 +52,8 @@
         throw new Error(data.error || "Failed to process receipt");
       }
 
-      // Store result and navigate
-      sessionStorage.setItem("splitBillResult", JSON.stringify(data));
-      await goto("/result");
+      // Redirect to UUID-based result page
+      await goto(`/result/${data.id}`);
     } catch (error) {
       console.error(error);
       errorMessage =

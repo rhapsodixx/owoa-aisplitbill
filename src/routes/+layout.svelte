@@ -1,6 +1,9 @@
 <script lang="ts">
   import "../app.css";
+  import { Toaster } from "$lib/components/ui/sonner";
 </script>
+
+<Toaster richColors />
 
 <div class="min-h-screen bg-background font-sans antialiased">
   <!-- Subtle gradient background for visual interest -->
