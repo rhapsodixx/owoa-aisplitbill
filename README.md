@@ -39,7 +39,7 @@ The project utilized several **Model Context Protocol (MCP)** tools:
 
 ## Prerequisites
 
-- **Node.js**: version 20 or higher.
+- **Node.js**: version 22.12.0 or higher (Required by Vite).
 - **Package Manager**: `pnpm` (recommended) or `npm`.
 - **Git**: For version control.
 - **Environment Variables**: Access to OpenRouter API key.
