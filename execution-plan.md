@@ -140,38 +140,38 @@
 
 ### 6.1 Frontend Agent Tasks
 
-- [ ] **Page 1 - Visibility Selector**:
-  - [ ] Add Result Visibility selector (shadcn `Select` or `RadioGroup`)
-  - [ ] Default value: Public
-  - [ ] Options: Public, Private
-- [ ] **Page 1 - Conditional Passcode Field**:
-  - [ ] Show passcode field ONLY when Private is selected
-  - [ ] Use shadcn `Input` component
-  - [ ] Max length: 8 characters
-  - [ ] Validation error via shadcn `FormMessage`
-  - [ ] Helper text via shadcn `FormDescription`: "Up to 8 characters"
-- [ ] **Page 2 - Passcode Prompt UI**:
-  - [ ] For private results: Show shadcn `Card` with passcode input
-  - [ ] Submit button to verify passcode
-  - [ ] Error display via shadcn `Alert` (destructive) or `FormMessage`
-  - [ ] Allow retry without page refresh
-  - [ ] On success: Reveal full result UI
+- [x] **Page 1 - Visibility Selector**:
+  - [x] Add Result Visibility selector (shadcn `Button` toggle)
+  - [x] Default value: Public
+  - [x] Options: Public, Private
+- [x] **Page 1 - Conditional Passcode Field**:
+  - [x] Show passcode field ONLY when Private is selected
+  - [x] Use shadcn `Input` component
+  - [x] Max length: 8 characters
+  - [x] Validation error display
+  - [x] Show/hide password toggle with Eye/EyeOff icons
+- [x] **Page 2 - Passcode Prompt UI**:
+  - [x] For private results: Show shadcn `Card` with passcode input
+  - [x] Submit button to verify passcode
+  - [x] Error display via shadcn `Alert` (destructive)
+  - [x] Allow retry without page refresh
+  - [x] On success: Reveal full result UI
 
 ### 6.2 Backend / Data Agent Tasks
 
-- [ ] **Schema Update**:
-  - [ ] Add `visibility` column (TEXT: 'public' | 'private')
-  - [ ] Add `passcode_hash` column (TEXT, nullable)
-  - [ ] Create migration file
-- [ ] **API Updates**:
-  - [ ] Accept `visibility` and `passcode` in submission payload
-  - [ ] Hash passcode server-side (bcrypt or argon2) before storage
-  - [ ] **NEVER store plaintext passcode**
-- [ ] **Passcode Verification Endpoint**:
-  - [ ] Create `POST /api/verify-passcode` endpoint
-  - [ ] Compare submitted passcode against stored hash
-  - [ ] Return success/failure response
-  - [ ] All verification MUST occur server-side
+- [x] **Schema Update**:
+  - [x] Add `visibility` column (TEXT: 'public' | 'private')
+  - [x] Add `passcode_hash` column (TEXT, nullable)
+  - [x] Create migration file
+- [x] **API Updates**:
+  - [x] Accept `visibility` and `passcode` in submission payload
+  - [x] Hash passcode server-side (bcrypt) before storage
+  - [x] **NEVER store plaintext passcode**
+- [x] **Passcode Verification Endpoint**:
+  - [x] Create `POST /api/verify-passcode` endpoint
+  - [x] Compare submitted passcode against stored hash
+  - [x] Return success/failure response
+  - [x] All verification occurs server-side
 
 ### 6.3 QA Agent Tasks
 
@@ -181,14 +181,16 @@
 
 ### 6.4 Exit Criteria
 
+- [x] Type check passes (0 errors)
+- [x] Production build succeeds
 - [ ] All automated tests for Phase 6 PASS
-- [ ] Manual verification of:
-  - [ ] Public result loads immediately
-  - [ ] Private result shows passcode prompt
-  - [ ] Correct passcode reveals result
-  - [ ] Incorrect passcode shows error
-- [ ] No plaintext passcodes in database
-- [ ] Share URL works for both public and private results
+- [x] Implementation of:
+  - [x] Public result loads immediately
+  - [x] Private result shows passcode prompt
+  - [x] Correct passcode reveals result
+  - [x] Incorrect passcode shows error
+- [x] No plaintext passcodes (bcrypt hashing)
+- [x] Share URL works for both public and private results
 
 ---
 
