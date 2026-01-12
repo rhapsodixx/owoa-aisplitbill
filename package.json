@@ -28,6 +28,7 @@
 		"vite": "^7.3.1"
 	},
 	"type": "module",
+	"packageManager": "pnpm@10.2.0",
 	"dependencies": {
 		"@internationalized/date": "^3.10.1",
 		"@radix-ui/react-separator": "^1.1.8",
