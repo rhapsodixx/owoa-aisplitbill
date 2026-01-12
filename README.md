@@ -90,15 +90,51 @@ pnpm build
 ```
 This produces a compiled version of the application in the `.svelte-kit` and `build` directories (depending on the adapter), optimized for performance and ready for deployment.
 
-## Deployment on Render
 
-To deploy this application on **Render**:
+## ☁️ Deployment (Render.com)
 
-1. **Create a new Web Service**: Connect your GitHub repository.
-2. **Set Node Version**: Ensure the environment uses Node 20+.
-3. **Add Environment Variables**: Include `OPENROUTER_API_KEY`, `OPENROUTER_MODEL_DEFAULT`, and `OPENROUTER_MODEL_FALLBACK`.
-4. **Build Command**: `pnpm install && pnpm build`
-5. **Start Command**: `node build` (or the command specified by your adapter).
+This application is optimized for deployment on **Render** as a Node.js Web Service.
+
+### Prerequisites
+- A [Render.com](https://render.com) account.
+- A connected GitHub repository containing this project.
+- Access to your API keys (OpenRouter, Supabase).
+
+### Configuration
+
+1. **Create New Web Service**: Select the repository.
+2. **Runtime**: Choose **Node.js**.
+3. **Build Command**:
+   ```bash
+   pnpm install && pnpm build
+   ```
+4. **Start Command**:
+   ```bash
+   node build
+   ```
+
+### Environment Variables
+
+You must manually add the following environment variables in the Render Dashboard.
+**Refer to [.env.example](.env.example) for the complete list of keys.**
+
+| Variable | Description |
+| :--- | :--- |
+| `NODE_ENV` | Set to `production`. |
+| `OPENROUTER_API_KEY` | Your private API key. |
+| `SUPABASE_URL` | Your Supabase Project URL. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your server-side Service Role Key. |
+
+> **⚠️ Security Note:** Never commit your `.env` file. Using the Supabase Service Role Key on the client-side will expose your database to attacks.
+
+### Verification
+
+After deployment:
+1. Wait for the "Build Successful" and "Service Live" status.
+2. Visit your `onrender.com` URL.
+3. Upload a receipt to test the full flow.
+4. Verify that the "Share" button produces a functional public URL.
+
 
 ## Project Philosophy
 

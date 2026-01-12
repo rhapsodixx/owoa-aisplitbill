@@ -244,21 +244,36 @@ The AI is responsible for:
 
 ---
 
-## ⚙️ Environment Variables
+
+---
+
+## ⚙️ Environment Variables & Configuration
+
+### Critical Configuration Rules
+
+- **Source of Truth:** `.env.example` is the comprehensive reference for all required variables.
+- **Production Safety:** `.env` files MUST NEVER be committed to version control.
+- **Runtime Injection:** Variables are injected at runtime in the deployment environment (Render).
 
 ### Required `.env` Variables
 
 ```env
-# AI Provider Configuration
+# Runtime Implementation
+NODE_ENV=development
+PORT=3000
+
+# AI Provider Configuration (OpenRouter)
 OPENROUTER_API_KEY=
 OPENROUTER_MODEL_DEFAULT=openai/gpt-4o-mini
 OPENROUTER_MODEL_FALLBACK=google/gemini-2.0-flash-001
 
 # Supabase Configuration
+# Note: Service Role Key is strictly SERVER-SIDE only.
 SUPABASE_URL=
 SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 ```
+
 
 ---
 

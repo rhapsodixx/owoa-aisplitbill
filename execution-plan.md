@@ -88,10 +88,68 @@
   - [ ] API error tests (skipped - requires file upload)
 - [x] **5.3** Build Verification: Production build succeeds
 
-### Phase 6: Deployment
 
-- [x] **6.1** Build Check: Ensure `npm run build` passes
-- [ ] **6.2** Environment: Set production vars in deployment platform
-- [ ] **6.3** Deploy: Trigger production deployment
-- [ ] **6.4** Smoke Test: Verify live URL
+## ☁️ Deployment — Render.com
+
+This section details the execution plan for deploying to Render.com as a Web Service.
+
+### 1️⃣ Service Setup
+- **Service Type**: Web Service
+- **Runtime**: Node.js
+- **Region**: Recommended to select a region close to your primary user base (e.g., Singapore/Ohio).
+- **Branch**: `main` (or release branch)
+
+### 2️⃣ Build & Start Configuration
+- **Root Directory**: `.` (Project Root)
+- **Runtime**: Node.js (Latest LTS, preferably v20+)
+- **Build Command**: `pnpm install && pnpm build`
+  - *Note*: Ensure `adapter-node` or `adapter-auto` is configured in `svelte.config.js` to produce a Node-compatible build.
+- **Start Command**: `node build`
+  - *Note*: This assumes the output directory is `build/`. If using a custom adapter config, adjust accordingly.
+
+### 3️⃣ Environment Variables
+The following variables MUST be configured in the Render Dashboard. Use `.env.example` as the authoritative source.
+
+**AI / OpenRouter**
+- `OPENROUTER_API_KEY`: [Secure Value]
+- `OPENROUTER_MODEL_DEFAULT`: `openai/gpt-4o-mini`
+- `OPENROUTER_MODEL_FALLBACK`: `google/gemini-2.0-flash-001`
+
+**Supabase**
+- `SUPABASE_URL`: [Your Project URL]
+- `SUPABASE_ANON_KEY`: [Your Anon Key]
+- `SUPABASE_SERVICE_ROLE_KEY`: [Your Service Role Key] (Required for server-side persistence)
+
+**App Runtime**
+- `NODE_ENV`: `production`
+- `PORT`: [Managed by Render, usually 10000. Do not set manually unless needed]
+- `BODY_SIZE_LIMIT`: `10M` (Optional: Adjust if receipt images require larger payloads, default SvelteKit is strict)
+
+### 4️⃣ Deployment Flow
+
+1. **Create Render Service**:
+   - Go to Render Dashboard -> New -> Web Service.
+2. **Connect Repository**:
+   - Link `owoa-aisplitbill` repository.
+3. **Configure Settings**:
+   - Enter Build & Start commands as above.
+   - Select Node.js Runtime.
+4. **Configure Environment Variables**:
+   - Copy values from your secure local storage/password manager.
+5. **Deploy**:
+   - Manual Deploy -> Deploy latest commit.
+6. **Verify Access**:
+   - Visit the Render-provided URL (e.g., `https://owoa-aisplitbill.onrender.com`).
+   - Confirm public access to `/result/{uuid}` if you have a valid ID.
+
+### 5️⃣ Post-Deployment Verification (Smoke Checklist)
+
+- [ ] **App Loads**: Landing page renders without 500 errors.
+- [ ] **Receipt Upload**: Application accepts JPG/PNG upload.
+- [ ] **AI Processing**: Form submission triggers AI and returns structured result.
+- [ ] **Persistence**: Result is saved to Supabase (check table if possible).
+- [ ] **UUID Result Page**: Redirects to `/result/{uuid}` and renders correctly.
+- [ ] **Share Button**: Clicking "Share" copies the correct public URL.
+- [ ] **Image Display**: Original receipt image loads from Supabase Storage on the result page.
+
 
