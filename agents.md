@@ -12,6 +12,7 @@ If any instruction conflicts with requirements.md: STOP and surface the conflict
 LOCKED STACK (NO SUBSTITUTIONS)
 - SvelteKit (TypeScript)
 - TailwindCSS + Shadcn-Svelte
+- Supabase (Database + Object Storage)
 - Vercel (Deployment)
 - Playwright + Vitest
 - OpenRouter API
@@ -19,7 +20,7 @@ Forbidden: [jQuery, Bootstrap, PHP, Python Backend]
 
 ANTI-GRAVITY EXECUTION MODE
 - Prefer small, verifiable changes over large refactors.
-- Produce deterministic outcomes: no “TBD”, no “maybe”, no placeholders.
+- Produce deterministic outcomes: no "TBD", no "maybe", no placeholders.
 - Do not introduce new dependencies or tools.
 - Keep UI intentionally minimal (unless specified otherwise).
 
@@ -39,11 +40,11 @@ FAIL-FAST CONDITIONS (STOP IMMEDIATELY)
 AGENT ROUTING (enforce boundaries)
 - Product Agent: scope policing only
 - Frontend Agent: UI only
-- Backend Agent: API + Integration
+- Backend Agent: API + Integration + Supabase writes
 - Data Agent: schema/migrations + RLS only
 - QA/Test Agent: Gherkin + E2E Tests only
 - Infra Agent: Deployment config only
-No agent may do another agent’s work.
+No agent may do another agent's work.
 -->
 
 # agents.md
@@ -76,9 +77,25 @@ Agents are **strictly limited** to the following stack.
 | Backend            | SvelteKit Server Routes               |
 | Auth               | None (No Auth required per non-goals) |
 | Runtime            | Node.js 20+                           |
-| Database           | None (Stateless)                      |
+| Database           | Supabase (PostgreSQL)                 |
+| Object Storage     | Supabase Object Storage               |
 | Deployment         | Vercel                                |
 | Environment config | .env (local) / Vercel Env (prod)      |
+
+### Supabase Usage Rules
+
+| Capability          | Access Pattern                                      |
+| ------------------- | --------------------------------------------------- |
+| Database Writes     | Server-side only (via `SUPABASE_SERVICE_ROLE_KEY`)  |
+| Database Reads      | Public read by UUID (via `SUPABASE_ANON_KEY`)       |
+| Object Storage      | Receipt images stored in a dedicated bucket         |
+| Image Access        | Public-read or signed-read (implementation choice)  |
+
+### Security Constraints
+
+- `SUPABASE_SERVICE_ROLE_KEY` MUST remain server-side only
+- Public result access is read-only and non-enumerable
+- No authentication or user identity concepts
 
 ### Testing
 
@@ -96,6 +113,7 @@ Agents are **strictly limited** to the following stack.
 - Rate limiting systems (unless specified)
 - Caching layers (beyond platform defaults)
 - Alternative hosting platforms
+- User authentication or identity management
 
 ⚠️ **No substitutions, no alternatives, no "future-ready" additions.**
 
@@ -147,15 +165,17 @@ Implement the **UI views and interactions** only.
 **Responsibilities**
 
 - Implement UI components and pages as defined in `requirements.md` (User Stories / UI Requirements).
-- Use **[UI Library]** for all UI components.
+- Use **shadcn-svelte** for ALL UI components.
 - Follow:
   - Accessibility rules (labels, aria-live, keyboard nav)
   - Responsive behavior defined in requirements
+- Display receipt images from Supabase Object Storage URLs
 
 **Non-Responsibilities**
 
 - API design or backend logic
-- Database access
+- Database access or writes
+- Supabase service key usage
 - Redirect/Business logic (server-side)
 - Test orchestration
 
@@ -182,8 +202,12 @@ Implement API and business logic.
 - Enforce:
   - HTTP status codes
   - JSON error schemas
-  - Route protection / Authentication middleware
-- Integrate with [Auth Provider] and [Database].
+- Integrate with Supabase for:
+  - **Server-side database writes** (storing split bill results)
+  - **Object Storage uploads** (receipt images)
+  - **Public read access** (result retrieval by UUID)
+- Generate cryptographically random UUID v4 for each result
+- Use `SUPABASE_SERVICE_ROLE_KEY` for writes (server-side only)
 
 **Non-Responsibilities**
 
@@ -211,12 +235,14 @@ Own storage correctness and data integrity.
 **Responsibilities**
 
 - Define and implement:
-  - Database schema
+  - Supabase database schema
   - Indexes
   - Data integrity rules (constraints)
-  - Security policies (e.g., RLS)
+  - Security policies (e.g., RLS for public read access)
+  - Object Storage bucket configuration
 - Ensure:
   - Data isolation and correctness
+  - Public read-only access pattern for results
 
 **Non-Responsibilities**
 
@@ -233,6 +259,7 @@ Own storage correctness and data integrity.
 
 - SQL schema / migration definitions
 - Data validation constraints
+- Supabase bucket policies
 
 ---
 
@@ -251,6 +278,8 @@ Guarantee deterministic, user-visible correctness.
   - All tests are deterministic
   - External dependencies are mocked where appropriate
   - Error states are tested
+- Test UUID-based result page access
+- Test share functionality (clipboard copy)
 
 **Non-Responsibilities**
 
@@ -275,17 +304,18 @@ Guarantee deterministic, user-visible correctness.
 ### 3.6 Infra / Deployment Agent
 
 **Purpose**
-Production readiness on **[Deployment Platform]**.
+Production readiness on **Vercel**.
 
 **Responsibilities**
 
 - Configure:
   - Deployment service/platform
   - Build/start commands
-  - Environment variables
+  - Environment variables (including Supabase keys)
 - Ensure:
   - Health of production deployment
   - No secrets exposed to client
+  - `SUPABASE_SERVICE_ROLE_KEY` is server-side only
 
 **Non-Responsibilities**
 
@@ -343,6 +373,8 @@ Agents must explicitly **not implement**:
 - Admin dashboards (unless specified)
 - Rate limiting (unless specified)
 - Background jobs (unless specified)
+- User authentication or identity management
+- Result history or pagination
 
 ---
 
