@@ -2,6 +2,7 @@ import { json, type RequestHandler } from '@sveltejs/kit';
 import { processReceipt } from '$lib/server/openrouter';
 import { supabaseAdmin, generateUUID } from '$lib/server/supabase';
 import { uploadReceiptImage } from '$lib/server/storage';
+import { hashPasscode } from '$lib/server/passcode';
 
 interface SplitBillRecord {
     id: string;
@@ -11,6 +12,8 @@ interface SplitBillRecord {
     fees_taxes: object;
     receipt_image_url: string;
     ai_model_used: string;
+    visibility: 'public' | 'private';
+    passcode_hash: string | null;
 }
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -20,6 +23,24 @@ export const POST: RequestHandler = async ({ request }) => {
         const image = formData.get('image') as File | null;
         const peopleCountStr = formData.get('peopleCount') as string | null;
         const instructions = (formData.get('instructions') as string) || '';
+        const visibility = (formData.get('visibility') as string) || 'public';
+        const passcode = (formData.get('passcode') as string) || '';
+
+        // Validate visibility
+        if (visibility !== 'public' && visibility !== 'private') {
+            return json({ error: 'Invalid visibility value' }, { status: 400 });
+        }
+
+        // Validate passcode if private
+        if (visibility === 'private') {
+            const trimmedPasscode = passcode.trim();
+            if (!trimmedPasscode) {
+                return json({ error: 'Passcode is required for private results' }, { status: 400 });
+            }
+            if (trimmedPasscode.length > 8) {
+                return json({ error: 'Passcode must be 8 characters or less' }, { status: 400 });
+            }
+        }
 
         // Validation
         if (!image) {
@@ -59,6 +80,12 @@ export const POST: RequestHandler = async ({ request }) => {
         // Extract AI model used (default model name)
         const aiModelUsed = process.env.OPENROUTER_MODEL_DEFAULT || 'openai/gpt-4o-mini';
 
+        // Hash passcode if private
+        let passcodeHash: string | null = null;
+        if (visibility === 'private') {
+            passcodeHash = await hashPasscode(passcode.trim());
+        }
+
         // Prepare record for database
         const record: SplitBillRecord = {
             id: uuid,
@@ -70,7 +97,9 @@ export const POST: RequestHandler = async ({ request }) => {
                 totalServiceFee: result.people.reduce((sum, p) => sum + (p.serviceFee || 0), 0)
             },
             receipt_image_url: receiptImageUrl,
-            ai_model_used: aiModelUsed
+            ai_model_used: aiModelUsed,
+            visibility: visibility as 'public' | 'private',
+            passcode_hash: passcodeHash
         };
 
         // Persist to Supabase
