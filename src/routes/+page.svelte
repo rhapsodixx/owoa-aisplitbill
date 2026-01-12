@@ -189,4 +189,9 @@
       {/if}
     </CardFooter>
   </Card>
+
+  <!-- App Version Display -->
+  <div class="mt-4 pb-4 text-center text-xs text-muted-foreground">
+    Version: {__APP_VERSION__}
+  </div>
 </div>
