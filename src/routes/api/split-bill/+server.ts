@@ -14,6 +14,7 @@ interface SplitBillRecord {
     ai_model_used: string;
     visibility: 'public' | 'private';
     passcode_hash: string | null;
+    payment_instruction: string | null;
 }
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -25,6 +26,7 @@ export const POST: RequestHandler = async ({ request }) => {
         const instructions = (formData.get('instructions') as string) || '';
         const visibility = (formData.get('visibility') as string) || 'public';
         const passcode = (formData.get('passcode') as string) || '';
+        const paymentInstruction = (formData.get('paymentInstruction') as string) || '';
 
         // Validate visibility
         if (visibility !== 'public' && visibility !== 'private') {
@@ -40,6 +42,12 @@ export const POST: RequestHandler = async ({ request }) => {
             if (trimmedPasscode.length > 8) {
                 return json({ error: 'Passcode must be 8 characters or less' }, { status: 400 });
             }
+        }
+
+        // Validate payment instruction (optional, max 300 chars)
+        const trimmedPaymentInstruction = paymentInstruction.trim();
+        if (trimmedPaymentInstruction.length > 300) {
+            return json({ error: 'Payment instruction must be 300 characters or less' }, { status: 400 });
         }
 
         // Validation
@@ -99,7 +107,8 @@ export const POST: RequestHandler = async ({ request }) => {
             receipt_image_url: receiptImageUrl,
             ai_model_used: aiModelUsed,
             visibility: visibility as 'public' | 'private',
-            passcode_hash: passcodeHash
+            passcode_hash: passcodeHash,
+            payment_instruction: trimmedPaymentInstruction || null
         };
 
         // Persist to Supabase

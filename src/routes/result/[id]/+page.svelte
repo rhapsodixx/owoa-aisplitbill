@@ -22,6 +22,7 @@
         Eye,
         EyeOff,
         Loader2,
+        CreditCard,
     } from "lucide-svelte";
     import { cn } from "$lib/utils";
     import { toast } from "svelte-sonner";
@@ -35,7 +36,8 @@
 
     export let data;
 
-    const { result, receiptImageUrl, resultId, isPrivate } = data;
+    const { result, receiptImageUrl, resultId, isPrivate, paymentInstruction } =
+        data;
 
     // Access control state
     let isUnlocked = !isPrivate; // Public results are unlocked by default
@@ -43,6 +45,7 @@
     let showPasscode = false;
     let passcodeError: string | null = null;
     let isVerifying = false;
+    let copiedPaymentInstruction = false;
 
     const avatarColors = [
         "bg-red-500",
@@ -118,6 +121,26 @@
             toast.error("Failed to copy link", {
                 description: "Please copy the URL manually.",
             });
+        }
+    }
+
+    async function copyPaymentInstruction() {
+        if (!paymentInstruction) return;
+
+        try {
+            await navigator.clipboard.writeText(paymentInstruction);
+            copiedPaymentInstruction = true;
+            toast.success("Payment instruction copied!", {
+                description:
+                    "You can now paste it to your banking app or message.",
+                position: "bottom-center",
+            });
+
+            setTimeout(() => {
+                copiedPaymentInstruction = false;
+            }, 2000);
+        } catch (err) {
+            toast.error("Failed to copy payment instruction");
         }
     }
 
@@ -385,6 +408,42 @@
                 </div>
             {/each}
         </div>
+
+        <!-- Payment Instruction Card (conditional) -->
+        {#if paymentInstruction}
+            <div class="mt-6" in:fade={{ delay: 300, duration: 300 }}>
+                <Card>
+                    <CardHeader class="pb-3">
+                        <CardTitle class="flex items-center gap-2 text-base">
+                            <CreditCard class="h-4 w-4" />
+                            Payment Instruction
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div class="rounded-lg bg-muted/50 p-4 relative group">
+                            <p
+                                class="whitespace-pre-wrap text-sm leading-relaxed pr-8 font-mono"
+                            >
+                                {paymentInstruction}
+                            </p>
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                class="absolute right-2 top-2 h-8 w-8 opacity-70 group-hover:opacity-100 transition-opacity"
+                                on:click={copyPaymentInstruction}
+                            >
+                                {#if copiedPaymentInstruction}
+                                    <Check class="h-4 w-4 text-green-500" />
+                                {:else}
+                                    <Copy class="h-4 w-4" />
+                                {/if}
+                                <span class="sr-only">Copy instruction</span>
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        {/if}
 
         <!-- Original Receipt Card -->
         <div class="mt-6" in:fade={{ delay: 400, duration: 300 }}>

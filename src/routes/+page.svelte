@@ -39,6 +39,10 @@
   let passcode: string = "";
   let showPasscode = false;
   let passcodeError: string | null = null;
+  let paymentInstruction: string = "";
+  let paymentInstructionError: string | null = null;
+
+  const PAYMENT_INSTRUCTION_MAX_LENGTH = 300;
 
   $: isPasscodeValid =
     visibility === "public" ||
@@ -74,6 +78,17 @@
       formData.append("visibility", visibility);
       if (visibility === "private") {
         formData.append("passcode", passcode.trim());
+      }
+
+      // Add payment instruction if provided (validate length)
+      const trimmedPaymentInstruction = paymentInstruction.trim();
+      if (trimmedPaymentInstruction.length > PAYMENT_INSTRUCTION_MAX_LENGTH) {
+        paymentInstructionError = `Payment instruction must be ${PAYMENT_INSTRUCTION_MAX_LENGTH} characters or less`;
+        return;
+      }
+      paymentInstructionError = null;
+      if (trimmedPaymentInstruction) {
+        formData.append("paymentInstruction", trimmedPaymentInstruction);
       }
 
       const response = await fetch("/api/split-bill", {
@@ -254,6 +269,39 @@
               <p class="text-xs text-destructive">{passcodeError}</p>
             {/if}
           </div>
+        {/if}
+      </div>
+
+      <Separator />
+
+      <!-- Payment Instruction (Optional) -->
+      <div class="space-y-2">
+        <Label for="paymentInstruction" class="text-sm font-medium">
+          Payment Instruction
+          <span class="font-normal text-muted-foreground">(Optional)</span>
+        </Label>
+        <Textarea
+          id="paymentInstruction"
+          placeholder="e.g., Payment to BCA bank account 861209892"
+          class="min-h-[80px] resize-none"
+          maxlength={PAYMENT_INSTRUCTION_MAX_LENGTH}
+          bind:value={paymentInstruction}
+        />
+        <div
+          class="flex items-center justify-between text-xs text-muted-foreground"
+        >
+          <span>Optional — shown on the result page if filled</span>
+          <span
+            class={paymentInstruction.length >
+            PAYMENT_INSTRUCTION_MAX_LENGTH - 50
+              ? "text-amber-600"
+              : ""}
+          >
+            {paymentInstruction.length}/{PAYMENT_INSTRUCTION_MAX_LENGTH}
+          </span>
+        </div>
+        {#if paymentInstructionError}
+          <p class="text-xs text-destructive">{paymentInstructionError}</p>
         {/if}
       </div>
     </CardContent>

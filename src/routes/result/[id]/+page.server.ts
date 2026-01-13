@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({ params }) => {
         createdAt: data.created_at,
         resultId: id,
         visibility: data.visibility || 'public',
-        isPrivate: (data.visibility === 'private')
+        isPrivate: (data.visibility === 'private'),
+        paymentInstruction: data.payment_instruction || null
     };
 };
