@@ -71,13 +71,30 @@ This page collects all user inputs required for AI processing.
       - Display errors via shadcn `FormMessage`
       - Helper text: "Up to 8 characters" via shadcn `FormDescription`
 
+6.  **Payment Instruction (Optional)**
+    - **Type:** Multiline text input
+    - **Mandatory:** NO
+    - **Purpose:** Let the creator specify how others should pay (bank/e-wallet/etc.)
+    - **Examples:**
+      - "Payment to BCA bank account 861209892"
+      - "Pay to OVO +6285725706128"
+    - **Validation Rules:**
+      - Max length: 300 characters
+      - Trim leading/trailing whitespace
+      - Allow numbers and symbols as typed (do not restrict formatting)
+    - **UI Requirements (STRICT shadcn):**
+      - Use shadcn `Textarea` component
+      - Use shadcn `FormDescription` to explain: "Optional — shown on the result page if filled"
+      - Use shadcn `FormMessage` for validation errors (if any, e.g., exceeding max length)
+
 #### Page 1 Behavior
 
 - User **cannot proceed** unless:
   - Receipt image is uploaded
   - Number of people is valid
-- On submit, all inputs (including visibility and passcode if private) are sent to the AI processing layer
+- On submit, all inputs (including visibility, passcode if private, and payment instruction if provided) are sent to the AI processing layer
 - Receipt image is uploaded to Supabase Object Storage before or alongside AI processing
+- Payment instruction is stored verbatim (after trimming) with the result record
 
 #### App Version Display
 
@@ -185,6 +202,23 @@ The AI must return data that can be rendered into:
 - Constraints:
   - No social SDKs
   - No third-party share libraries
+
+#### Payment Instruction Display (Conditional)
+
+**Visibility Rules:**
+- If `payment_instruction` is NULL or empty → the entire section is **completely hidden**.
+- If `payment_instruction` is present → show a dedicated section near share controls.
+
+**Display Requirements:**
+- Wrap the section in a shadcn `Card` component
+- Use a clear heading (e.g., "Payment Instruction")
+- Display exactly what the user entered — **no rewriting, reformatting, or masking of numbers**
+- If text is long, optionally render inside shadcn `ScrollArea`
+
+**Copyable Text Requirement:**
+- Provide a **Copy** button (shadcn `Button`) that copies the exact instruction string to clipboard
+- Show copy feedback using shadcn `Toast` component with success message
+- The copied text must be the raw value, no modifications
 
 #### Receipt Image Display
 
@@ -296,18 +330,25 @@ All AI-generated split bill results MUST be persisted in Supabase.
 
 #### Result Record Schema
 
-| Field              | Type      | Description                              |
-| ------------------ | --------- | ---------------------------------------- |
-| `id`               | UUID (PK) | Cryptographically random UUID v4         |
-| `result_data`      | JSON      | Structured split bill result             |
-| `currency`         | TEXT      | Currency code (e.g., "IDR", "USD")       |
-| `person_breakdown` | JSON      | Per-person allocation details            |
-| `fees_taxes`       | JSON      | Allocated fees and taxes breakdown       |
-| `receipt_image_url`| TEXT      | Public or signed URL to the receipt      |
-| `created_at`       | TIMESTAMP | Timestamp of record creation             |
-| `ai_model_used`    | TEXT      | Identifier of the AI model used          |
-| `visibility`       | TEXT      | 'public' OR 'private'                    |
-| `passcode_hash`    | TEXT      | Hashed passcode (NULL if public)         |
+| Field                 | Type      | Description                                              |
+| --------------------- | --------- | -------------------------------------------------------- |
+| `id`                  | UUID (PK) | Cryptographically random UUID v4                         |
+| `result_data`         | JSON      | Structured split bill result                             |
+| `currency`            | TEXT      | Currency code (e.g., "IDR", "USD")                       |
+| `person_breakdown`    | JSON      | Per-person allocation details                            |
+| `fees_taxes`          | JSON      | Allocated fees and taxes breakdown                       |
+| `receipt_image_url`   | TEXT      | Public or signed URL to the receipt                      |
+| `created_at`          | TIMESTAMP | Timestamp of record creation                             |
+| `ai_model_used`       | TEXT      | Identifier of the AI model used                          |
+| `visibility`          | TEXT      | 'public' OR 'private'                                    |
+| `passcode_hash`       | TEXT      | Hashed passcode (NULL if public)                         |
+| `payment_instruction` | TEXT      | User-provided payment instruction (NULL if not provided) |
+
+**Payment Instruction Storage Rules:**
+- Stored **server-side only** — never processed by AI
+- Stored **verbatim** (after trimming leading/trailing whitespace)
+- Returned **verbatim** to the result page
+- NULL if not provided by the user
 
 #### UUID Rules (NON-NEGOTIABLE)
 
@@ -434,6 +475,24 @@ The AI is responsible for:
 - Input must be sanitized to reduce prompt injection risk
 - AI output must be deterministic and structured
 
+### LLM Guard Rails for Payment Instruction (MANDATORY)
+
+> [!CAUTION]
+> `payment_instruction` is **NOT** AI input and must NEVER be processed by the LLM.
+
+**The LLM MUST NOT:**
+- Receive `payment_instruction` as part of the prompt
+- Use `payment_instruction` for bill splitting, reasoning, inference, or validation
+- Rewrite, "clean up", reformat, or extract numbers from the payment instruction
+- Infer that it is a bank account, phone number, or payment method
+- Summarize, parse, or validate the payment instruction content
+
+**Treatment as Opaque Metadata:**
+- `payment_instruction` is treated as **opaque user-provided metadata**
+- It is stored and displayed verbatim
+- Copy action copies the raw value exactly as entered
+- No AI processing or transformation is permitted
+
 ---
 
 ## 🧪 Testing & Validation Requirements
@@ -452,15 +511,41 @@ The AI is responsible for:
 - **Password Reset:**
   - Verify reset flow initiation.
 
+### Payment Instruction Tests (Playwright + Gherkin)
+
+All scenarios below MUST be covered by automated tests:
+
+- **Page 1 — Optional Input:**
+  - Verify payment instruction field is visible and optional (form submits without it)
+  - Verify max length validation (300 chars) triggers error if exceeded
+  - Verify whitespace is trimmed on submission
+
+- **Page 2 — Conditional Display:**
+  - Verify result page **hides** the Payment Instruction section when `payment_instruction` is NULL/empty
+  - Verify result page **shows** the Payment Instruction section when `payment_instruction` is present
+  - Verify displayed text matches the exact input (no reformatting)
+
+- **Page 2 — Copy Functionality:**
+  - Verify Copy button copies the **exact** instruction text to clipboard
+  - Assert clipboard contents match the original input (use `context.grantPermissions(['clipboard-read'])` and `page.evaluate(() => navigator.clipboard.readText())`)
+  - Verify shadcn Toast appears with success feedback after copying
+
+**Test Determinism Requirements:**
+- Mock Supabase reads/writes (use Supabase MCP where possible)
+- Use Playwright MCP for clipboard assertions
+- Tests must NOT rely on live external services
+
 ### MCP Utilization Guidelines
 - **Context7 MCP:** Reference for libraries/docs.
 - **Supabase MCP:**
   - Validate Auth flows.
   - Validate Admin User listing queries.
   - Validate Paginated split bill queries.
+  - Validate `payment_instruction` column retrieval patterns.
 - **Playwright MCP:**
   - Execute auth-protected UI tests.
   - Validate Modal interactions & clipboard operations.
+  - Validate Payment Instruction copy-to-clipboard functionality.
 - **Sequential Thinking MCP:**
   - Use to break down Admin Dashboard implementation into deterministic steps.
 
