@@ -260,3 +260,331 @@ pnpm playwright test --ui
 - [ ] **Public results load immediately**
 - [ ] **Private results show passcode prompt**
 - [ ] **Passcode verification works correctly**
+
+---
+
+## 🔐 Feature Track: Admin Authentication & User Management
+
+> [!IMPORTANT]
+> This feature track introduces a **protected Admin area** that is **completely separate** from the public split-bill flow.
+> All phases MUST follow the guard rails defined in this document and `requirements.md`.
+
+### Global Guard Rails (Admin Feature)
+
+- **Authentication**: Supabase Auth ONLY (Email + Password)
+- **Registration**: Invite-only (NO public signup)
+- **UI**: shadcn dashboard layout and components ONLY
+- **Route Protection**: Server-side enforcement via SvelteKit hooks
+- **LLM Guard Rails**: Admin data MUST NOT be passed to LLM
+- **Test-Gated**: No phase may proceed unless all required Playwright/Gherkin tests PASS
+
+### Failure Handling Protocol
+
+> [!CAUTION]
+> If any phase encounters issues:
+> 1. Attempt to resolve (max 3 attempts)
+> 2. Log each attempt in `execution-progress.md`
+> 3. After 3 failures: **STOP and escalate to user**
+
+---
+
+### Phase 7.0 — Admin Discovery & Contracts
+
+**Objective**: Establish technical contracts, validate Supabase APIs, and define admin-only data patterns.
+
+**Owner**: Backend Agent / Product Agent
+
+**Checklist**:
+- [ ] Confirm admin routes: `/admin/login`, `/admin/dashboard`
+- [ ] Define auth session strategy (Supabase Auth, server-side session validation)
+- [ ] Identify Supabase APIs: `inviteUserByEmail`, `listUsers`, `resetPasswordForEmail`
+- [ ] Define admin-only data access patterns (RLS or service-role only)
+- [ ] Document shadcn dashboard component set to use
+- [ ] Define API contracts for admin endpoints
+
+**Guard Rails**:
+- No custom auth logic (Supabase SDK only)
+- No public signup routes
+- All admin queries use `SUPABASE_SERVICE_ROLE_KEY` (server-side)
+
+**MCP Usage**:
+| MCP | Purpose |
+|-----|---------|
+| **Context7** | Confirm Supabase Auth APIs, shadcn dashboard patterns |
+| **Supabase MCP** | Validate invite flow, reset flow, admin listing APIs |
+| **Serena MCP** | Track dependencies and scope boundaries |
+| **Sequential Thinking** | Break down auth strategy into deterministic steps |
+
+**Exit Criteria**:
+- [ ] All API contracts documented
+- [ ] Supabase APIs validated via MCP
+- [ ] Component set finalized
+- [ ] No implementation started until contracts approved
+
+**Required Tests**: None (discovery phase)
+
+---
+
+### Phase 7.1 — Admin Auth UI + Route Protection
+
+**Objective**: Implement admin login page, auth-required route protection, and password reset entry point.
+
+**Owner**: Frontend Agent / Backend Agent
+
+**Checklist**:
+- [ ] Create `/admin/login` page (shadcn Card, Input, Button)
+- [ ] Implement email + password login via Supabase Auth
+- [ ] Create SvelteKit hook for `/admin/*` route protection
+- [ ] Redirect unauthenticated users to `/admin/login`
+- [ ] Add password reset link/flow entry point
+- [ ] Implement logout functionality
+
+**Guard Rails**:
+- No social login providers
+- No client-side-only auth checks
+- All session validation must occur server-side
+- Use shadcn components only
+
+**MCP Usage**:
+| MCP | Purpose |
+|-----|---------|
+| **Context7** | Reference SvelteKit hooks + Supabase Auth patterns |
+| **Supabase MCP** | Validate `signInWithPassword`, `resetPasswordForEmail` |
+| **Playwright MCP** | Define auth mock strategy for tests |
+| **shadcn MCP** | Confirm Card, Input, Button, Alert patterns |
+
+**Exit Criteria**:
+- [ ] Login page renders correctly
+- [ ] Valid credentials grant access to dashboard
+- [ ] Invalid credentials show error (shadcn Alert)
+- [ ] Unauthenticated access to `/admin/dashboard` redirects to login
+- [ ] Password reset flow initiates correctly
+- [ ] **All required Playwright/Gherkin tests PASS**
+
+**Required Tests (Gherkin Scenarios)**:
+| # | Scenario Title |
+|---|----------------|
+| 1 | Admin login with valid credentials |
+| 2 | Admin login with invalid credentials shows error |
+| 3 | Unauthenticated user redirected from dashboard to login |
+| 4 | Password reset flow initiates from login page |
+| 5 | Logout clears session and redirects to login |
+
+> ⛔ **Do not proceed to Phase 7.2 unless all tests pass.**
+
+---
+
+### Phase 7.2 — Admin User Management
+
+**Objective**: Implement invite admin functionality and admin user listing table.
+
+**Owner**: Frontend Agent / Backend Agent
+
+**Checklist**:
+- [ ] Create "Invite Admin" form (email input, shadcn Button)
+- [ ] Implement invite API using Supabase `inviteUserByEmail`
+- [ ] Create admin user list table (shadcn Table)
+- [ ] Display columns: Email, Created Date, Status (Active/Invited)
+- [ ] Implement invite success/error feedback (shadcn Toast/Alert)
+- [ ] Ensure no public signup route exists
+
+**Guard Rails**:
+- Invite MUST use Supabase Auth `inviteUserByEmail` API
+- No role hierarchy (all admins are equal)
+- No profile customization
+- All admin listing queries server-side only
+
+**MCP Usage**:
+| MCP | Purpose |
+|-----|---------|
+| **Supabase MCP** | Validate `inviteUserByEmail`, admin listing queries |
+| **Context7** | Reference shadcn Table, Form patterns |
+| **Playwright MCP** | Define invite flow test strategy |
+
+**Exit Criteria**:
+- [ ] Invite form submits successfully
+- [ ] Invited admin receives email (or Supabase log shows invite)
+- [ ] Admin list table renders with correct columns
+- [ ] No public signup route accessible
+- [ ] **All required Playwright/Gherkin tests PASS**
+
+**Required Tests (Gherkin Scenarios)**:
+| # | Scenario Title |
+|---|----------------|
+| 1 | Invite admin by email success |
+| 2 | Invite admin with invalid email shows error |
+| 3 | Admin list renders with expected columns |
+| 4 | No public signup route exists (404 or redirect) |
+| 5 | Invited admin status shows correctly in list |
+
+> ⛔ **Do not proceed to Phase 7.3 unless all tests pass.**
+
+---
+
+### Phase 7.3 — Split Bill Admin Listing (Paginated)
+
+**Objective**: Implement paginated split bill list with required columns and copy URL action.
+
+**Owner**: Frontend Agent / Backend Agent
+
+**Checklist**:
+- [ ] Create split bill list API with server-side pagination (Supabase)
+- [ ] Create paginated table UI (shadcn Table + Pagination)
+- [ ] Display columns: UUID, Total Amount, People Count, Visibility, Created At
+- [ ] Add "View Detail" button (opens modal)
+- [ ] Add "Copy Link" button (copies full result URL)
+- [ ] Implement pagination controls (shadcn Pagination)
+
+**Guard Rails**:
+- Pagination MUST be server-side (Supabase-driven)
+- No client-side filtering of full dataset
+- Read-only (no edit/delete from this view)
+
+**MCP Usage**:
+| MCP | Purpose |
+|-----|---------|
+| **Supabase MCP** | Validate paginated queries, range-based fetching |
+| **Context7** | Reference shadcn Table, Pagination patterns |
+| **Playwright MCP** | Define clipboard mock for "Copy Link" tests |
+
+**Exit Criteria**:
+- [ ] Split bill list renders with all required columns
+- [ ] Pagination works correctly (next/prev/page numbers)
+- [ ] "Copy Link" copies correct URL to clipboard
+- [ ] "View Detail" opens modal (Phase 7.4)
+- [ ] **All required Playwright/Gherkin tests PASS**
+
+**Required Tests (Gherkin Scenarios)**:
+| # | Scenario Title |
+|---|----------------|
+| 1 | Split bill list renders with required columns |
+| 2 | Pagination displays correct page count |
+| 3 | Next/Previous pagination works |
+| 4 | Copy URL button copies full result URL to clipboard |
+| 5 | Empty state shows when no bills exist |
+
+> ⛔ **Do not proceed to Phase 7.4 unless all tests pass.**
+
+---
+
+### Phase 7.4 — Split Bill Detail Modal
+
+**Objective**: Implement detail modal/dialog with bill breakdown, receipt image, and copy URL action.
+
+**Owner**: Frontend Agent
+
+**Checklist**:
+- [ ] Create detail modal (shadcn Dialog)
+- [ ] Display per-person summary breakdown
+- [ ] Display total fees/taxes
+- [ ] Display receipt image preview (shadcn AspectRatio)
+- [ ] Add "Copy Public Link" button inside modal
+- [ ] Add "Close" button (shadcn DialogClose)
+- [ ] Ensure modal is read-only (no edit/delete)
+
+**Guard Rails**:
+- Modal content is read-only
+- No editing or deletion of bill data
+- Use shadcn Dialog component only
+
+**MCP Usage**:
+| MCP | Purpose |
+|-----|---------|
+| **Context7** | Reference shadcn Dialog, AspectRatio patterns |
+| **Playwright MCP** | Define modal interaction tests |
+
+**Exit Criteria**:
+- [ ] Modal opens when "View Detail" clicked
+- [ ] Bill breakdown displays correctly
+- [ ] Receipt image loads and displays
+- [ ] "Copy Link" inside modal works
+- [ ] Modal closes properly
+- [ ] **All required Playwright/Gherkin tests PASS**
+
+**Required Tests (Gherkin Scenarios)**:
+| # | Scenario Title |
+|---|----------------|
+| 1 | Detail modal opens on "View Detail" click |
+| 2 | Modal displays per-person breakdown |
+| 3 | Modal displays receipt image |
+| 4 | Copy URL inside modal copies correct URL |
+| 5 | Modal closes on Close button click |
+| 6 | Modal closes on backdrop click (if enabled) |
+
+> ⛔ **Do not proceed to Phase 7.5 unless all tests pass.**
+
+---
+
+### Phase 7.5 — QA Hardening & Regression
+
+**Objective**: Expand test coverage, add negative cases, verify shadcn compliance, and ensure deterministic mocking.
+
+**Owner**: QA Agent
+
+**Checklist**:
+- [ ] Add negative test cases for all auth flows
+- [ ] Add edge case tests (empty states, long lists, etc.)
+- [ ] Verify all UI uses shadcn components (visual audit)
+- [ ] Ensure deterministic mocking for:
+  - Supabase Auth (mock sessions)
+  - Supabase queries (mock data)
+  - Clipboard API (mock writes)
+- [ ] Run full regression suite
+- [ ] Document any skipped tests with rationale
+
+**Guard Rails**:
+- No flaky tests allowed
+- All external dependencies must be mocked
+- No real Supabase calls in E2E tests
+
+**MCP Usage**:
+| MCP | Purpose |
+|-----|---------|
+| **Playwright MCP** | Run full test suite, validate mocking strategy |
+| **Supabase MCP** | Confirm mock data matches real schema |
+| **Serena MCP** | Track test coverage and gaps |
+
+**Exit Criteria**:
+- [ ] All Playwright tests PASS (0 failures)
+- [ ] No flaky tests
+- [ ] Type check passes (0 errors)
+- [ ] Build verification passes
+- [ ] shadcn compliance verified
+- [ ] **Admin feature ready for deployment**
+
+**Required Tests (Gherkin Scenarios)**:
+| # | Scenario Title |
+|---|----------------|
+| 1 | Admin login timeout shows appropriate error |
+| 2 | Invalid session token redirects to login |
+| 3 | Empty admin list shows placeholder |
+| 4 | Pagination on single page disabled correctly |
+| 5 | Full regression: all admin scenarios pass |
+
+---
+
+## 📋 Admin Feature Test Summary
+
+| Phase | Test Count | Focus Area |
+|-------|------------|------------|
+| 7.0 | 0 | Discovery only |
+| 7.1 | 5 | Auth flows |
+| 7.2 | 5 | User management |
+| 7.3 | 5 | Bill listing |
+| 7.4 | 6 | Detail modal |
+| 7.5 | 5+ | Hardening |
+| **Total** | **26+** | Full admin coverage |
+
+---
+
+## 🔌 MCP Summary for Admin Feature
+
+| MCP Server | Primary Use |
+|------------|-------------|
+| **Context7** | Documentation grounding: shadcn, Supabase Auth, SvelteKit |
+| **Serena MCP** | Task tracking, scope enforcement, dependency management |
+| **Supabase MCP** | API validation: invite, reset, list, paginate |
+| **Playwright MCP** | Test execution: auth mocks, clipboard mocks, modal tests |
+| **Sequential Thinking** | Complex phase decomposition |
+| **shadcn MCP** | Component patterns: Dashboard, Table, Dialog, Form |
+

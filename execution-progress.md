@@ -14,7 +14,13 @@
 | Phase 3 | AI Logic & API | ✅ Complete | Backend |
 | Phase 4 | Result Page (Page 2) | ✅ Complete | Frontend |
 | Phase 5 | Testing & Verification | ✅ Complete | QA |
-| **Phase 6** | **Public/Private Result + Passcode** | 🔄 In Progress | All Agents |
+| Phase 6 | Public/Private Result + Passcode | ✅ Complete | All Agents |
+| **Phase 7.0** | **Admin Discovery & Contracts** | ⏳ Not Started | Backend / Product |
+| **Phase 7.1** | **Admin Auth UI + Route Protection** | ⏳ Not Started | Frontend / Backend |
+| **Phase 7.2** | **Admin User Management** | ⏳ Not Started | Frontend / Backend |
+| **Phase 7.3** | **Split Bill Admin Listing** | ⏳ Not Started | Frontend / Backend |
+| **Phase 7.4** | **Split Bill Detail Modal** | ⏳ Not Started | Frontend |
+| **Phase 7.5** | **QA Hardening & Regression** | ⏳ Not Started | QA |
 
 ---
 
@@ -23,6 +29,10 @@
 > [!NOTE]
 > **2026-01-13**: Plan updated to include Phase 6 (Public/Private Result with Passcode Protection).
 > Triggered by addition of result visibility and passcode protection features in `requirements.md`.
+
+> [!IMPORTANT]
+> **2026-01-13 12:01**: Plan updated to include **Admin Authentication & User Management** feature track (Phases 7.0-7.5).
+> Triggered by addition of Admin Dashboard requirements in `requirements.md`.
 
 ---
 
@@ -42,7 +52,7 @@
 
 ---
 
-## Phase 6 Progress: Public/Private Result + Passcode
+## Phase 6 Progress: Public/Private Result + Passcode ✅
 
 | Date       | Time  | Agent        | Task                          | Status       | Notes |
 | ---------- | ----- | ------------ | ----------------------------- | ------------ | ----- |
@@ -61,16 +71,122 @@
 
 ---
 
-## Exit Criteria Tracking
-
-### Phase 6 Exit Criteria
+## Phase 6 Exit Criteria ✅
 
 | Criteria | Status |
 |----------|--------|
-| All automated tests PASS | ⏳ Pending (E2E tests not yet written) |
+| All automated tests PASS | ✅ Complete (12 passed) |
 | Public result loads immediately | ✅ Implemented |
 | Private result shows passcode prompt | ✅ Implemented |
 | Correct passcode reveals result | ✅ Implemented |
 | Incorrect passcode shows error | ✅ Implemented |
 | No plaintext passcodes in database | ✅ Implemented (bcrypt hashing) |
 | Share URL works for both visibility types | ✅ Implemented |
+
+---
+
+## 🔐 Phase 7: Admin Authentication & User Management
+
+### 2026-01-13 12:01 — Plan Update — Orchestrator
+
+- **Action taken**: Added Admin Dashboard feature track to execution-plan.md
+- **Phases added**: 7.0 (Discovery), 7.1 (Auth UI), 7.2 (User Mgmt), 7.3 (Bill List), 7.4 (Detail Modal), 7.5 (QA Hardening)
+- **Result**: Execution plan updated successfully
+- **Tests planned**: 26+ Gherkin scenarios across all phases
+- **Next step**: Begin Phase 7.0 — Discovery & Contracts
+
+---
+
+### Phase 7.0 — Admin Discovery & Contracts
+
+| Date | Time | Agent | Task | Status | Notes |
+|------|------|-------|------|--------|-------|
+| - | - | - | - | ⏳ Not Started | - |
+
+**Recovery Notes**:
+- **Where to resume**: Start with Supabase API validation via Supabase MCP
+- **Key files**: `requirements.md` (Admin section), `execution-plan.md` (Phase 7.0)
+- **Commands to rerun**: N/A (discovery phase)
+- **Known risks**: Supabase Auth API limitations, invite flow availability
+
+---
+
+### Phase 7.1 — Admin Auth UI + Route Protection
+
+| Date | Time | Agent | Task | Status | Notes |
+|------|------|-------|------|--------|-------|
+| - | - | - | - | ⏳ Not Started | - |
+
+**Recovery Notes**:
+- **Where to resume**: Create `/admin/login` route
+- **Key files**: `src/routes/admin/login/+page.svelte`, `src/hooks.server.ts`
+- **Commands to rerun**: `pnpm dev`, `pnpm playwright test --grep "admin login"`
+- **Known risks**: SvelteKit hook configuration for route protection
+
+---
+
+### Phase 7.2 — Admin User Management
+
+| Date | Time | Agent | Task | Status | Notes |
+|------|------|-------|------|--------|-------|
+| - | - | - | - | ⏳ Not Started | - |
+
+**Recovery Notes**:
+- **Where to resume**: Create invite form and admin list table
+- **Key files**: `src/routes/admin/dashboard/+page.svelte`, `src/routes/api/admin/invite/+server.ts`
+- **Commands to rerun**: `pnpm playwright test --grep "admin user"`
+- **Known risks**: Supabase `inviteUserByEmail` requires proper SMTP config
+
+---
+
+### Phase 7.3 — Split Bill Admin Listing
+
+| Date | Time | Agent | Task | Status | Notes |
+|------|------|-------|------|--------|-------|
+| - | - | - | - | ⏳ Not Started | - |
+
+**Recovery Notes**:
+- **Where to resume**: Create paginated split bill list API and UI
+- **Key files**: `src/routes/admin/dashboard/+page.svelte`, `src/routes/api/admin/bills/+server.ts`
+- **Commands to rerun**: `pnpm playwright test --grep "split bill list"`
+- **Known risks**: Supabase range-based pagination edge cases
+
+---
+
+### Phase 7.4 — Split Bill Detail Modal
+
+| Date | Time | Agent | Task | Status | Notes |
+|------|------|-------|------|--------|-------|
+| - | - | - | - | ⏳ Not Started | - |
+
+**Recovery Notes**:
+- **Where to resume**: Create shadcn Dialog for bill details
+- **Key files**: `src/routes/admin/dashboard/+page.svelte` (or separate component)
+- **Commands to rerun**: `pnpm playwright test --grep "detail modal"`
+- **Known risks**: Receipt image loading from Supabase Storage
+
+---
+
+### Phase 7.5 — QA Hardening & Regression
+
+| Date | Time | Agent | Task | Status | Notes |
+|------|------|-------|------|--------|-------|
+| - | - | - | - | ⏳ Not Started | - |
+
+**Recovery Notes**:
+- **Where to resume**: Run full regression, add negative cases
+- **Key files**: `tests/admin/*.spec.ts`, `tests/features/admin/*.feature`
+- **Commands to rerun**: `pnpm playwright test`, `pnpm test`
+- **Known risks**: Flaky tests, mock configuration drift
+
+---
+
+## ⚠️ Failure Escalation Log
+
+> [!CAUTION]
+> This section tracks any escalations due to repeated failures.
+> If 3 attempts fail for any phase task, log here and STOP.
+
+| Date | Phase | Issue | Attempts | Escalated | Resolution |
+|------|-------|-------|----------|-----------|------------|
+| - | - | - | - | - | - |
