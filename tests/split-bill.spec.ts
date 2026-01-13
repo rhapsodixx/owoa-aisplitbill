@@ -27,12 +27,12 @@ test.describe('Split Bill E2E Tests', () => {
 
         // Verify page title and heading
         await expect(page.getByRole('heading', { name: 'AI Split Bill' })).toBeVisible();
-        await expect(page.getByText('Upload a receipt, tell us who ate what.')).toBeVisible();
+        await expect(page.getByText('Upload a receipt, tell us who ate what, and let AI calculate the split.')).toBeVisible();
 
         // Verify form elements
-        await expect(page.getByText('Receipt Image')).toBeVisible();
+        await expect(page.getByText('Bill Details')).toBeVisible();
         await expect(page.getByLabel('Number of People')).toBeVisible();
-        await expect(page.getByLabel('Extra Instructions')).toBeVisible();
+        await expect(page.getByRole('textbox', { name: /splitting instructions/i })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Split Bill with AI' })).toBeVisible();
     });
 
@@ -54,8 +54,8 @@ test.describe('Split Bill E2E Tests', () => {
 
         // Verify empty state
         await expect(page.getByText('No Receipt Found')).toBeVisible();
-        await expect(page.getByText('Upload a receipt to see the breakdown.')).toBeVisible();
-        await expect(page.getByRole('button', { name: 'Go to Upload' })).toBeVisible();
+        await expect(page.getByText('Upload a receipt', { exact: false })).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Go to Upload' })).toBeVisible();
     });
 
     // Skip: window.location.href navigation doesn't work reliably with Playwright dev server
