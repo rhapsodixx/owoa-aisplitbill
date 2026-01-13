@@ -11,7 +11,7 @@ Allow users to upload a receipt, describe how food/drinks were consumed, and rec
 
 ## 📄 Page Structure (STRICT)
 
-The application has **ONLY TWO (2) PAGES**:
+The application has **ONLY TWO (2) PUBLIC PAGES** and **ONE (1) PROTECTED ADMIN AREA**:
 
 ### **Page 1: Bill Input Page**
 
@@ -195,6 +195,73 @@ The AI must return data that can be rendered into:
   - Read-only (no editing or replacement)
   - Uses shadcn-friendly layout components (e.g., `AspectRatio`, `ScrollArea`)
 
+    - Uses shadcn-friendly layout components (e.g., `AspectRatio`, `ScrollArea`)
+
+---
+
+## 🛂 Admin Authentication & User Management (NEW)
+
+### Admin Authentication
+
+- **Provider:** Supabase Auth ONLY.
+- **Method:** Email + Password.
+- **Registration Constraints:**
+  - ❌ **No public sign-up**.
+  - ✅ **Invite-only**: New admins must be invited by an existing admin via Supabase Auth `inviteUserByEmail` API.
+- **Login Page:**
+  - Dedicated route (e.g., `/admin/login`).
+  - No social login providers.
+- **Password Management:**
+  - Admin users MUST be able to reset their password using Supabase's built-in reset flow.
+  - All auth flows MUST use Supabase SDK/APIs.
+  - **Forbidden:** Custom auth logic or tables.
+
+### Admin Dashboard (Protected)
+
+The Admin Dashboard allows authorized users to manage admin access and oversee operations.
+
+**Route:** `/admin/dashboard` (Protected server-side)
+
+#### 1. Admin User Management
+- **Capabilities:**
+  - **Invite Admin:** Form to invite a new admin by email.
+  - **List Admins:** Table showing:
+    - Email
+    - Created Date
+    - Status (Active / Invited / Etc.)
+- **Constraints:**
+  - Admin users require email + password only.
+  - No profile customization (name, avatar, etc.).
+  - No role hierarchy (all admins are super-admins).
+
+#### 2. Split Bill Management
+- **List View:**
+  - Display all split bills in a **Paginated Table** (shadcn `Table` + `Pagination`).
+  - **Columns:**
+    - UUID (truncated or link)
+    - Total Amount
+    - Total Number of People
+    - Visibility (Public / Private)
+    - Created At
+    - **Actions:**
+        - "View Detail" button (opens Modal).
+        - "Copy Link" button (copies full result URL).
+- **Server-Side Pagination:** Required (Supabase-driven).
+
+- **Detail View (Modal/Dialog):**
+  - Triggered by "View Detail".
+  - **Content:**
+    - Simplified bill breakdown (Per-person summary).
+    - Total fees/taxes.
+    - **Receipt Image Preview** (shadcn `AspectRatio`).
+  - **Actions:**
+    - "Copy Public Link" (shadcn `Button`).
+    - "Close" (shadcn `DialogClose`).
+  - **Constraints:**
+    - Read-only.
+    - **No editing** of bill data.
+    - **No deletion** of bill data.
+
 ---
 
 ## 🗄️ Data Persistence & Storage
@@ -256,7 +323,8 @@ All AI-generated split bill results MUST be persisted in Supabase.
   - Non-enumerable (no listing or pagination)
 - No authentication required to view results
 
-### Server-Side Security
+### Server-Side Security & Guard Rails
+
 
 - Supabase service keys MUST remain server-side only
 - Passcodes MUST be hashed (e.g., bcrypt/argon2) before storage. NEVER store in plaintext.
@@ -264,6 +332,20 @@ All AI-generated split bill results MUST be persisted in Supabase.
 - No sensitive or personal data is exposed on public result pages
 - Results CANNOT be deleted or updated via public access
 - Receipt images cannot be modified or replaced after upload
+
+### Admin Security Guard Rails (MANDATORY)
+
+- **Access Control:**
+  - Admin routes (`/admin/*`) MUST be protected via **Server-Side** checks (e.g., SvelteKit Hooks).
+  - Admin dashboard is **NOT** accessible via public UUID URLs.
+  - No admin actions via client-only checks.
+
+- **LLM Guard Rails:**
+  - The LLM MUST:
+    - **NOT** be used for admin authentication logic.
+    - **NOT** interpret or process admin user data.
+    - **NOT** generate admin-only business logic.
+  - Admin dashboard data is handled via strict Supabase queries ONLY.
 
 ---
 
@@ -285,6 +367,14 @@ ALL UI components MUST:
 - Custom UI components (components not from shadcn)
 - Inline styles
 - Third-party UI libraries
+
+### Admin UI Constraints
+- **Admin Dashboard MUST use:**
+  - `shadcn` dashboard layout (Sidebar/Topnav pattern).
+  - `shadcn` components for Tables, Pagination, Dialogs, Buttons, Forms.
+- **Forbidden:**
+  - Custom dashboard components.
+  - Inline styles for layout.
 
 ---
 
@@ -327,6 +417,36 @@ The AI is responsible for:
 
 ---
 
+## 🧪 Testing & Validation Requirements
+
+### Automated Tests (Playwright + Gherkin)
+- **Admin Login:**
+  - Verify success with valid credentials.
+  - Verify failure with invalid credentials.
+  - Verify redirection to Login if unauthenticated.
+- **Admin Registration:**
+  - Verify invite-only flow (API mock or check).
+- **Split Bill Management:**
+  - Verify List View renders with pagination.
+  - Verify Detail Modal opens and displays correct data.
+  - Verify "Copy Link" functionality works in dashboard.
+- **Password Reset:**
+  - Verify reset flow initiation.
+
+### MCP Utilization Guidelines
+- **Context7 MCP:** Reference for libraries/docs.
+- **Supabase MCP:**
+  - Validate Auth flows.
+  - Validate Admin User listing queries.
+  - Validate Paginated split bill queries.
+- **Playwright MCP:**
+  - Execute auth-protected UI tests.
+  - Validate Modal interactions & clipboard operations.
+- **Sequential Thinking MCP:**
+  - Use to break down Admin Dashboard implementation into deterministic steps.
+
+---
+
 
 ---
 
@@ -362,14 +482,13 @@ SUPABASE_SERVICE_ROLE_KEY=
 
 ## 🎯 Non-Goals (Explicitly Out of Scope)
 
-- User authentication
-- User accounts
-- History of past bills
+- **Public** User authentication
+- **Public** User accounts
+- History of past bills (Public)
 - Payments or payment integrations
-- More than 2 pages
+- More than 2 **Public** pages
 - Manual editing of extracted receipt items
-- Dashboards or admin panels
-- Pagination or result listing
-- Pagination or result listing
+- **Public** Dashboards
+- **Public** Pagination or result listing
 - Social sharing SDKs
 - Brute-force protection (current scope)
