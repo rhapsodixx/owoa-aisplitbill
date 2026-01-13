@@ -262,6 +262,25 @@ The Admin Dashboard allows authorized users to manage admin access and oversee o
     - **No editing** of bill data.
     - **No deletion** of bill data.
 
+#### 3. Admin Responsive Layout
+- **Desktop (lg+):**
+  - Persistent sidebar navigation (shadcn `Sidebar` with `SidebarProvider`).
+  - Full table columns visible with proper spacing.
+  - Sidebar collapsible via `SidebarTrigger`.
+- **Tablet (md):**
+  - Sidebar collapsible to icon-only mode.
+  - Tables remain usable with horizontal scroll (shadcn `ScrollArea`).
+- **Mobile (sm):**
+  - Sidebar converts to Sheet drawer (shadcn `Sheet`).
+  - Table columns progressively hidden; essential data visible.
+  - Horizontal scroll for full table access.
+  - Actions remain accessible via icon buttons.
+- **Approved Components:**
+  - `Sidebar`, `SidebarProvider`, `SidebarInset`, `SidebarTrigger`
+  - `Sheet` (mobile navigation drawer)
+  - `ScrollArea` (horizontal table scroll)
+  - `Table`, `Card`, `Button`, `Dialog`
+
 ---
 
 ## 🗄️ Data Persistence & Storage

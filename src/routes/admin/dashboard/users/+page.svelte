@@ -6,6 +6,7 @@
     import { Label } from "$lib/components/ui/label";
     import * as Alert from "$lib/components/ui/alert";
     import * as Table from "$lib/components/ui/table";
+    import * as ScrollArea from "$lib/components/ui/scroll-area";
     import {
         Loader2,
         AlertCircle,
@@ -60,7 +61,7 @@
                         await update();
                     };
                 }}
-                class="flex gap-4"
+                class="flex flex-col gap-3 sm:flex-row sm:gap-4"
             >
                 <div class="flex-1">
                     <Label for="email" class="sr-only">Email</Label>
@@ -72,7 +73,11 @@
                         required
                     />
                 </div>
-                <Button type="submit" disabled={loading}>
+                <Button
+                    type="submit"
+                    disabled={loading}
+                    class="w-full sm:w-auto"
+                >
                     {#if loading}
                         <Loader2 class="mr-2 h-4 w-4 animate-spin" />
                         Sending...
@@ -92,49 +97,62 @@
                 List of all admin users with access to this dashboard.
             </Card.Description>
         </Card.Header>
-        <Card.Content>
-            <Table.Root>
-                <Table.Header>
-                    <Table.Row>
-                        <Table.Head>Email</Table.Head>
-                        <Table.Head>Created</Table.Head>
-                        <Table.Head>Status</Table.Head>
-                    </Table.Row>
-                </Table.Header>
-                <Table.Body>
-                    {#each data.users as user (user.id)}
-                        <Table.Row>
-                            <Table.Cell class="font-medium"
-                                >{user.email}</Table.Cell
-                            >
-                            <Table.Cell>
-                                {new Date(user.created_at).toLocaleDateString()}
-                            </Table.Cell>
-                            <Table.Cell>
-                                <span
-                                    class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
-                  {user.email_confirmed_at
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-yellow-100 text-yellow-700'}"
+        <Card.Content class="p-0 sm:p-6">
+            <ScrollArea.Root class="w-full">
+                <div class="min-w-[400px]">
+                    <Table.Root>
+                        <Table.Header>
+                            <Table.Row>
+                                <Table.Head>Email</Table.Head>
+                                <Table.Head class="hidden sm:table-cell"
+                                    >Created</Table.Head
                                 >
-                                    {user.email_confirmed_at
-                                        ? "Active"
-                                        : "Pending"}
-                                </span>
-                            </Table.Cell>
-                        </Table.Row>
-                    {:else}
-                        <Table.Row>
-                            <Table.Cell
-                                colspan={3}
-                                class="text-center text-muted-foreground"
-                            >
-                                No admin users found.
-                            </Table.Cell>
-                        </Table.Row>
-                    {/each}
-                </Table.Body>
-            </Table.Root>
+                                <Table.Head>Status</Table.Head>
+                            </Table.Row>
+                        </Table.Header>
+                        <Table.Body>
+                            {#each data.users as user (user.id)}
+                                <Table.Row>
+                                    <Table.Cell class="font-medium">
+                                        <span
+                                            class="block truncate max-w-[200px] sm:max-w-none"
+                                        >
+                                            {user.email}
+                                        </span>
+                                    </Table.Cell>
+                                    <Table.Cell class="hidden sm:table-cell">
+                                        {new Date(
+                                            user.created_at,
+                                        ).toLocaleDateString()}
+                                    </Table.Cell>
+                                    <Table.Cell>
+                                        <span
+                                            class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium
+                      {user.email_confirmed_at
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-yellow-100 text-yellow-700'}"
+                                        >
+                                            {user.email_confirmed_at
+                                                ? "Active"
+                                                : "Pending"}
+                                        </span>
+                                    </Table.Cell>
+                                </Table.Row>
+                            {:else}
+                                <Table.Row>
+                                    <Table.Cell
+                                        colspan={3}
+                                        class="text-center text-muted-foreground"
+                                    >
+                                        No admin users found.
+                                    </Table.Cell>
+                                </Table.Row>
+                            {/each}
+                        </Table.Body>
+                    </Table.Root>
+                </div>
+                <ScrollArea.Scrollbar orientation="horizontal" />
+            </ScrollArea.Root>
         </Card.Content>
     </Card.Root>
 </div>
