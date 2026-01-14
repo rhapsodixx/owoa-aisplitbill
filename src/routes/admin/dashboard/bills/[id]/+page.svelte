@@ -16,7 +16,7 @@
     } from "lucide-svelte";
 
     let { data } = $props();
-    const { bill } = data;
+    let bill = $derived(data.bill);
 
     function formatCurrency(amount: number | undefined): string {
         if (amount === undefined || amount === null) return "N/A";
@@ -224,7 +224,50 @@
                                     <Table.Cell
                                         class="text-sm text-muted-foreground hidden sm:table-cell"
                                     >
-                                        {person.items?.length || 0} items
+                                        <div class="flex flex-col gap-1">
+                                            <span class="font-medium">
+                                                {(person.foodItems?.length ||
+                                                    0) +
+                                                    (person.drinkItems
+                                                        ?.length || 0)} items
+                                            </span>
+                                            {#if (person.foodItems?.length || 0) + (person.drinkItems?.length || 0) > 0}
+                                                <div
+                                                    class="text-xs text-muted-foreground space-y-0.5 mt-1"
+                                                >
+                                                    {#each person.foodItems || [] as item}
+                                                        <div
+                                                            class="flex justify-between gap-2"
+                                                        >
+                                                            <span
+                                                                >{item.name}</span
+                                                            >
+                                                            <span
+                                                                class="tabular-nums"
+                                                                >{formatCurrency(
+                                                                    item.price,
+                                                                )}</span
+                                                            >
+                                                        </div>
+                                                    {/each}
+                                                    {#each person.drinkItems || [] as item}
+                                                        <div
+                                                            class="flex justify-between gap-2"
+                                                        >
+                                                            <span
+                                                                >{item.name}</span
+                                                            >
+                                                            <span
+                                                                class="tabular-nums"
+                                                                >{formatCurrency(
+                                                                    item.price,
+                                                                )}</span
+                                                            >
+                                                        </div>
+                                                    {/each}
+                                                </div>
+                                            {/if}
+                                        </div>
                                     </Table.Cell>
                                     <Table.Cell class="text-right"
                                         >{formatCurrency(
@@ -234,7 +277,8 @@
                                     <Table.Cell
                                         class="text-right hidden md:table-cell"
                                         >{formatCurrency(
-                                            person.share_of_fees,
+                                            (person.tax || 0) +
+                                                (person.serviceFee || 0),
                                         )}</Table.Cell
                                     >
                                     <Table.Cell class="text-right font-semibold"

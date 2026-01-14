@@ -12,10 +12,13 @@ interface BillDetail {
     };
     person_breakdown: Array<{
         name: string;
-        items: Array<{ name: string; amount: number }>;
+        foodItems: Array<{ name: string; price: number }>;
+        drinkItems: Array<{ name: string; price: number }>;
         subtotal: number;
-        share_of_fees: number;
+        tax: number;
+        serviceFee: number;
         total: number;
+        share_of_fees: number;
     }>;
     fees_taxes: {
         tax?: number;
