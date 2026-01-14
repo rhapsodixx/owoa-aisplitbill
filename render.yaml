@@ -15,9 +15,9 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: OPENROUTER_MODEL_DEFAULT
-        value: openai/gpt-4o-mini
+        value: google/gemini-2.5-flash
       - key: OPENROUTER_MODEL_FALLBACK
-        value: google/gemini-2.0-flash-001
+        value: openai/gpt-4o-mini
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
