@@ -276,12 +276,12 @@
 
       <!-- Payment Instruction (Optional) -->
       <div class="space-y-2">
-        <Label for="paymentInstruction" class="text-sm font-medium">
+        <Label for="payment-note" class="text-sm font-medium">
           Payment Instruction
           <span class="font-normal text-muted-foreground">(Optional)</span>
         </Label>
         <Textarea
-          id="paymentInstruction"
+          id="payment-note"
           placeholder="e.g., Payment to BCA bank account 861209892"
           class="min-h-[80px] resize-none"
           maxlength={PAYMENT_INSTRUCTION_MAX_LENGTH}
