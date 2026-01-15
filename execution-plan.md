@@ -1,107 +1,250 @@
-# Execution Plan: Brute-Force Protection (Private Results)
+# Execution Plan: Frontend Performance Optimization
 
-**Feature:** Mandatory Brute-Force Protection for `/result/{uuid}`
-**Target:** Prevent unauthorized access via passcode guessing.
-**Constraint:** 5 attempts / 15 minutes -> 15 minute lockout.
-
----
-
-## Phase 0 — Spec & Testability Check
-**Owner:** Orchestrator + QA
-**Goal:** Ensure requirements are unambiguous and testable before code.
-
-- [ ] Confirm `lockout` window (15 mins) and `attempt` window (15 mins) are aligned.
-- [ ] Confirm `client_identifier` logic (Session > Hash(IP+UA)).
-- [ ] Define Gherkin scenario titles for testing default lockout, reset, and isolation behaviors.
-- [ ] Check feasibility of `Retry-After` header with current frontend networking stack.
-
-**Exit Criteria:**
-- Spec is clear on 429 responses.
-- Gherkin scenarios enumerated in progress log.
+> **Reference:** Based on [Performance Audit Report](file:///Users/panji.gautama/.gemini/antigravity/brain/b2a15ed6-a54f-450c-951f-9e16d7005500/performance-audit-report.md)
+> **Created:** 2026-01-15
+> **Status:** Planning
 
 ---
 
-## Phase 1 — Backend Enforcement Design
-**Owner:** Backend Agent
-**Goal:** Define server-side schema and logic points.
+## 🛡️ Guard Rails (MANDATORY)
 
-- [x] **Enforcement Points:**
-    - Identify where `passcode` verification currently happens (Supabase Edge Function or SvelteKit Server Action?).
-    - Insert "Check Rate Limit" step *before* verification.
-    - Insert "Increment Count" step *after* failure.
-    - Insert "Reset Count" step *after* success.
-- [x] **Storage Strategy:**
-    - Use persisting table `passcode_attempts` (as defined in `requirements.md`).
-    - Schema: `uuid`, `client_key`, `failed_count`, `locked_until`, `last_attempt_at`.
-- [x] **Privacy Check:**
-    - Ensure `client_key` is a HASH (SHA-256), not raw IP.
-    - Ensure 429 response does not hint at whether the UUID exists (timing safe if possible, but priority is functioning lockout).
+> [!CAUTION]
+> These rules apply to ALL phases and CANNOT be bypassed.
 
-**Exit Criteria:**
-- Backend design/checklist complete.
-- `passcode_attempts` table migration verified.
+### Agent Role Boundaries
 
----
+| Agent | Allowed | Forbidden |
+|-------|---------|-----------|
+| **Frontend Agent** | Extract components, move utilities, modify animations | Add new libraries, change data fetching patterns, modify server code |
+| **QA Agent** | Write tests for refactored components | Modify implementation code |
+| **Product Agent** | Approve scope changes | Write code |
 
-## Phase 2 — UI/UX Lockout Handling
-**Owner:** Frontend Agent
-**Goal:** User-friendly handling of lockout states.
+### LLM Guard Rails
 
-- [ ] **Lockout UI:**
-    - Detect `429 Too Many Requests`.
-    - Extract `retry-after` or wait time from response.
-    - Display shadcn `Alert` (Destructive) or friendly text: "Too many attempts. Please try again in X minutes."
-    - Disable `Submit` button during lockout.
-- [ ] **Passcode Error UI:**
-    - Standard "Wrong passcode" feedback (shadcn `FormMessage`).
-    - Attempt counter visualization (Optional: "X attempts remaining").
-- [ ] **Components:**
-    - Strictly use `shadcn` (Card, Input, Button, Alert).
+- **DO NOT** add new dependencies without explicit user approval
+- **DO NOT** change data fetching patterns (server-side load functions are correct)
+- **DO NOT** modify API endpoints or backend logic
+- **DO NOT** alter Supabase queries or RLS policies
+- **DO NOT** break existing functionality — all changes must be backwards-compatible
+- **DO NOT** remove existing features or UI elements
 
-**Exit Criteria:**
-- UI handles 429 cleanly.
-- No endless loading states.
+### Quality Gates
+
+- All changes must pass `pnpm check` (TypeScript)
+- All changes must pass `pnpm build` (Production build)
+- Existing Playwright tests must continue to pass
+- No visual regressions in UI
 
 ---
 
-## Phase 3 — Automated Tests
-**Owner:** QA Agent
-**Goal:** Deterministic verification of rules.
+## 📊 Priority Matrix
 
-- [ ] **Test Suite (Playwright + Gherkin):**
-    - `Scenario: Progressive Lockout`: 5 wrong attempts -> 6th blocked.
-    - `Scenario: Lockout Response`: Check for 429 status + UI message.
-    - `Scenario: Counter Reset`: 4 wrong -> 1 correct -> counter becomes 0.
-    - `Scenario: Lockout Persistence`: Valid passcode blocked during lockout.
-    - `Scenario: Client Isolation`: New client (diff IP/UA) not blocked by other's lockout.
-- [ ] **Determinism Strategy:**
-    - Mock specific DB states (e.g., inject a record with `failed_count=5`).
-    - Do NOT wait 15 minutes in real-time tests.
+Based on audit findings, prioritized by impact and effort:
 
-**Exit Criteria:**
-- All tests pass locally.
-- Tests are deterministic (no flake).
+| Priority | Finding | Severity | Effort | Phase |
+|----------|---------|----------|--------|-------|
+| 1 | Animation stagger delay cap | Medium | Low | Phase 1 |
+| 2 | Extract shared utilities | Low | Low | Phase 2 |
+| 3 | Component extraction (Result page) | Low | Medium | Phase 3 |
 
 ---
 
-## Phase 4 — Hardening & Regression Gate
-**Owner:** Backend + QA
-**Goal:** Security & Regression checks.
+## Phase 1: Animation Performance 🎯
 
-- [ ] **Security Checks:**
-    - Verify no plaintext passcodes in logs.
-    - Verify client hash is not reversible (standard SHA-256).
-- [ ] **Regression:**
-    - Verify Public results still load immediately (no auth prompt).
-    - Verify correct Private passcodes still work instantly (no lag).
+**Owner:** Frontend Agent  
+**Effort:** ~30 minutes  
+**Risk:** Low
 
-**Exit Criteria:**
-- Full regression suite passes.
-- No critical security issues found.
+### Objective
+
+Cap staggered animation delays on the result page to prevent cumulative delays for large lists.
+
+### Tasks
+
+- [x] **1.1** Locate animation in `src/routes/result/[id]/+page.svelte` (lines 335-337)
+- [x] **1.2** Modify delay calculation: `delay: Math.min(i * 80, 400)`
+- [x] **1.3** Verify change with visual inspection
+
+### Proposed Change
+
+```svelte
+<!-- BEFORE -->
+<div in:slide={{ delay: i * 80, duration: 250 }}>
+
+<!-- AFTER -->
+<div in:slide={{ delay: Math.min(i * 80, 400), duration: 250 }}>
+```
+
+### Exit Criteria
+
+- [x] Build passes
+- [x] Result page loads with 10+ people without excessive delay
+- [x] Animations still provide visual feedback
 
 ---
 
-## Guard Rails
-- **Test-Gated Progression:** Do not move to Next Phase until Exit Criteria met.
-- **Max Fix Attempts:** 3 attempts per phase. If failing, Stop & Notify.
-- **Scope Creep:** NO CAPTCHA, NO External WAF, NO new Auth.
+## Phase 2: Utility Consolidation 🧹
+
+**Owner:** Frontend Agent  
+**Effort:** ~1 hour  
+**Risk:** Low
+
+### Objective
+
+Extract duplicated utilities to shared location for maintainability.
+
+### Tasks
+
+- [ ] **2.1** Create/update `src/lib/utils.ts` with shared utilities
+- [ ] **2.2** Add `formatCurrency(amount: number, currency?: string)` function
+- [ ] **2.3** Add `avatarColors` constant array
+- [ ] **2.4** Update imports in:
+  - [ ] `src/routes/result/[id]/+page.svelte`
+  - [ ] `src/routes/admin/dashboard/bills/+page.svelte`
+- [ ] **2.5** Remove duplicate definitions from components
+
+### Guard Rails
+
+- Utility functions must maintain exact same behavior
+- Default currency must remain "USD" to avoid breaking changes
+- `avatarColors` order must not change (affects existing result displays)
+
+### Exit Criteria
+
+- [ ] No duplicate `formatCurrency` functions in codebase
+- [ ] Type check passes
+- [ ] Build passes
+
+---
+
+## Phase 3: Component Extraction (Optional) 📦
+
+**Owner:** Frontend Agent  
+**Effort:** ~2-3 hours  
+**Risk:** Medium
+
+> [!IMPORTANT]
+> This phase is **optional** and may be deferred. Proceed only if approved.
+
+### Objective
+
+Split large result page into smaller, focused components.
+
+### Proposed Components
+
+| Component | Responsibility | Lines Affected |
+|-----------|---------------|----------------|
+| `PasscodePrompt.svelte` | Passcode entry UI | ~70 lines |
+| `PersonCard.svelte` | Individual person breakdown | ~130 lines |
+| `PaymentInstructionCard.svelte` | Payment display + copy | ~35 lines |
+| `ReceiptCard.svelte` | Receipt image display | ~20 lines |
+| `FloatingBottomBar.svelte` | Grand total + share actions | ~50 lines |
+
+### Tasks
+
+- [ ] **3.1** Create component files in `src/lib/components/result/`
+- [ ] **3.2** Extract `PasscodePrompt.svelte`
+- [ ] **3.3** Extract `PersonCard.svelte`
+- [ ] **3.4** Extract `PaymentInstructionCard.svelte`
+- [ ] **3.5** Extract `ReceiptCard.svelte`
+- [ ] **3.6** Extract `FloatingBottomBar.svelte`
+- [ ] **3.7** Update main result page to compose from child components
+- [ ] **3.8** Verify all props and events work correctly
+
+### Guard Rails
+
+- Props interface must be strictly typed
+- Event handlers must be forwarded correctly
+- Animations must continue to work
+- No visual changes to UI
+
+### Exit Criteria
+
+- [ ] All Playwright tests pass
+- [ ] Visual parity with current implementation
+- [ ] Type check passes
+- [ ] Build passes
+
+---
+
+## 📋 Test Requirements
+
+### Phase 1 Tests
+
+No new tests required — existing tests should continue to pass.
+
+### Phase 2 Tests
+
+- [ ] Unit tests for `formatCurrency` utility (Vitest)
+- [ ] Verify existing Playwright tests pass
+
+### Phase 3 Tests
+
+- [ ] Playwright tests for result page interactions
+- [ ] Component unit tests (optional, Vitest)
+
+---
+
+## 🤖 Multi-Agent Workflow
+
+### Handoff Protocol
+
+```mermaid
+graph LR
+    A[Performance Auditor] -->|Findings Report| B[Product Agent]
+    B -->|Approved Plan| C[Frontend Agent]
+    C -->|Implementation| D[QA Agent]
+    D -->|Test Results| B
+```
+
+### Agent Communication Format
+
+When handing off between agents, include:
+
+1. **Context**: What was done and why
+2. **Scope**: Exact files and changes allowed
+3. **Constraints**: What NOT to change
+4. **Exit Criteria**: How to know when done
+
+### Phase Ownership
+
+| Phase | Primary Owner | Reviewer |
+|-------|--------------|----------|
+| Phase 1 | Frontend Agent | QA Agent |
+| Phase 2 | Frontend Agent | QA Agent |
+| Phase 3 | Frontend Agent | Product Agent + QA Agent |
+
+---
+
+## ⏱️ Estimated Timeline
+
+| Phase | Estimated Time | Dependencies |
+|-------|---------------|--------------|
+| Phase 1 | 30 min | None |
+| Phase 2 | 1 hour | None |
+| Phase 3 | 2-3 hours | User approval |
+| **Total** | ~4 hours max | |
+
+---
+
+## 🚫 Out of Scope
+
+The following are explicitly **NOT** part of this optimization effort:
+
+- Server-side data fetching changes
+- API endpoint modifications
+- Database schema changes
+- New library/dependency additions
+- Bundle size optimization (no issues found)
+- Supabase query optimization
+
+---
+
+## ✅ Approval Checklist
+
+Before proceeding to execution:
+
+- [ ] User approves Phase 1 (Animation cap)
+- [ ] User approves Phase 2 (Utility extraction)
+- [ ] User decides on Phase 3 (Component extraction — optional)
+- [ ] Guard rails are understood and accepted
