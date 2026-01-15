@@ -5,6 +5,7 @@
     import { Button } from "$lib/components/ui/button";
     import { Separator } from "$lib/components/ui/separator";
     import { toast } from "svelte-sonner";
+    import { formatCurrency as formatCurrencyBase } from "$lib/utils";
     import {
         ArrowLeft,
         Copy,
@@ -18,12 +19,9 @@
     let { data } = $props();
     let bill = $derived(data.bill);
 
-    function formatCurrency(amount: number | undefined): string {
-        if (amount === undefined || amount === null) return "N/A";
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: bill.result_data?.currency || "USD",
-        }).format(amount);
+    // Use shared formatCurrency with bill-specific currency
+    function formatCurrency(amount: number | undefined | null): string {
+        return formatCurrencyBase(amount, bill.result_data?.currency || "USD");
     }
 
     function formatDate(dateString: string): string {

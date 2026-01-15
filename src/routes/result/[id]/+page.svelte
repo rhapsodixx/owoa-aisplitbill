@@ -26,7 +26,7 @@
         CreditCard,
         Clock,
     } from "lucide-svelte";
-    import { cn } from "$lib/utils";
+    import { cn, formatCurrency, getAvatarColor } from "$lib/utils";
     import { toast } from "svelte-sonner";
     import { Input } from "$lib/components/ui/input";
     import { Label } from "$lib/components/ui/label";
@@ -54,26 +54,7 @@
     let lockoutRemainingSeconds = 0;
     let lockoutTimer: ReturnType<typeof setInterval>;
 
-    const avatarColors = [
-        "bg-red-500",
-        "bg-orange-500",
-        "bg-amber-500",
-        "bg-green-500",
-        "bg-emerald-500",
-        "bg-teal-500",
-        "bg-cyan-500",
-        "bg-blue-500",
-        "bg-indigo-500",
-        "bg-violet-500",
-        "bg-purple-500",
-        "bg-fuchsia-500",
-        "bg-pink-500",
-        "bg-rose-500",
-    ];
-
-    function getAvatarColor(index: number) {
-        return avatarColors[index % avatarColors.length];
-    }
+    // formatCurrency and getAvatarColor imported from $lib/utils
 
     interface BillItem {
         name: string;
@@ -97,12 +78,7 @@
 
     let copied = false;
 
-    function formatCurrency(amount: number) {
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-        }).format(amount);
-    }
+    // formatCurrency imported from $lib/utils
 
     function goBack() {
         window.location.href = "/";

@@ -4,6 +4,7 @@
     import * as ScrollArea from "$lib/components/ui/scroll-area";
     import { Button } from "$lib/components/ui/button";
     import { toast } from "svelte-sonner";
+    import { formatCurrency } from "$lib/utils";
     import {
         Copy,
         Eye,
@@ -14,13 +15,7 @@
 
     let { data } = $props();
 
-    function formatCurrency(amount: number | undefined): string {
-        if (amount === undefined) return "N/A";
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-        }).format(amount);
-    }
+    // formatCurrency imported from $lib/utils
 
     function formatDate(dateString: string): string {
         return new Date(dateString).toLocaleDateString("en-US", {
