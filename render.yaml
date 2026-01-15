@@ -3,7 +3,7 @@ services:
     name: owoa-aisplitbill
     env: node
     plan: free
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm run build
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --prod=false && pnpm run build
     startCommand: node build
     envVars:
       - key: NODE_ENV
