@@ -334,7 +334,7 @@
         <!-- Person Cards -->
         <div class="space-y-4" in:fade={{ duration: 300 }}>
             {#each people as person, i}
-                <div in:slide={{ delay: i * 80, duration: 250 }}>
+                <div in:slide={{ delay: Math.min(i * 80, 400), duration: 250 }}>
                     <Card
                         class="overflow-hidden transition-shadow hover:shadow-md"
                     >
