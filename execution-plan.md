@@ -95,13 +95,14 @@ Extract duplicated utilities to shared location for maintainability.
 
 ### Tasks
 
-- [ ] **2.1** Create/update `src/lib/utils.ts` with shared utilities
-- [ ] **2.2** Add `formatCurrency(amount: number, currency?: string)` function
-- [ ] **2.3** Add `avatarColors` constant array
-- [ ] **2.4** Update imports in:
-  - [ ] `src/routes/result/[id]/+page.svelte`
-  - [ ] `src/routes/admin/dashboard/bills/+page.svelte`
-- [ ] **2.5** Remove duplicate definitions from components
+- [x] **2.1** Create/update `src/lib/utils.ts` with shared utilities
+- [x] **2.2** Add `formatCurrency(amount: number, currency?: string)` function
+- [x] **2.3** Add `avatarColors` constant array
+- [x] **2.4** Update imports in:
+  - [x] `src/routes/result/[id]/+page.svelte`
+  - [x] `src/routes/admin/dashboard/bills/+page.svelte`
+  - [x] `src/routes/admin/dashboard/bills/[id]/+page.svelte`
+- [x] **2.5** Remove duplicate definitions from components
 
 ### Guard Rails
 
@@ -111,9 +112,9 @@ Extract duplicated utilities to shared location for maintainability.
 
 ### Exit Criteria
 
-- [ ] No duplicate `formatCurrency` functions in codebase
-- [ ] Type check passes
-- [ ] Build passes
+- [x] No duplicate `formatCurrency` functions in codebase
+- [x] Type check passes
+- [x] Build passes
 
 ---
 
