@@ -1,10 +1,16 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
 import { supabaseAdmin } from '$lib/server/supabase';
 import { verifyPasscode } from '$lib/server/passcode';
+import {
+    getClientIdentifier,
+    checkRateLimit,
+    recordFailure,
+    resetRateLimit
+} from '$lib/server/rate-limit';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async (event) => {
     try {
-        const body = await request.json();
+        const body = await event.request.json();
         const { id, passcode } = body;
 
         // Validate input
@@ -22,6 +28,27 @@ export const POST: RequestHandler = async ({ request }) => {
             return json({ error: 'Invalid result ID' }, { status: 400 });
         }
 
+        // 1. Identify Client
+        const clientKey = getClientIdentifier(event);
+
+        // 2. Check Rate Limit
+        const limitStatus = await checkRateLimit(id, clientKey);
+        if (limitStatus.locked) {
+            const retryAfter = limitStatus.retryAfterSeconds || 60;
+            return json(
+                {
+                    error: 'Too many failed attempts. Please try again later.',
+                    retryAfter
+                },
+                {
+                    status: 429,
+                    headers: {
+                        'Retry-After': retryAfter.toString()
+                    }
+                }
+            );
+        }
+
         // Fetch result from Supabase
         const { data, error: dbError } = await supabaseAdmin
             .from('split_bill_results')
@@ -30,6 +57,7 @@ export const POST: RequestHandler = async ({ request }) => {
             .single();
 
         if (dbError || !data) {
+            // Return 404 if not found (attacker learns UUID is invalid immediately)
             return json({ error: 'Result not found' }, { status: 404 });
         }
 
@@ -46,8 +74,13 @@ export const POST: RequestHandler = async ({ request }) => {
         const isValid = await verifyPasscode(passcode.trim(), data.passcode_hash);
 
         if (!isValid) {
+            // 3. Record Failure
+            await recordFailure(id, clientKey);
             return json({ error: 'Incorrect passcode' }, { status: 401 });
         }
+
+        // 4. Success -> Reset Limit
+        await resetRateLimit(id, clientKey);
 
         return json({ success: true });
     } catch (error) {
