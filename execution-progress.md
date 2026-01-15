@@ -10,7 +10,7 @@
 | Phase | Description | Owner | Status |
 | :--- | :--- | :--- | :--- |
 | **Phase 0** | Spec & Testability Check | Orchestrator | ✅ Completed |
-| **Phase 1** | Backend Enforcement Design | Backend | ⏳ Not Started |
+| **Phase 1** | Backend Enforcement Design | Backend | ✅ Completed |
 | **Phase 2** | UI/UX Lockout Handling | Frontend | ⏳ Not Started |
 | **Phase 3** | Automated Tests | QA | ⏳ Not Started |
 | **Phase 4** | Hardening & Regression Gate | QA/Backend | ⏳ Not Started |
@@ -34,3 +34,11 @@
 - Checked Retry-After feasibility (Confirmed).
 **Reference:** task.md verified.
 
+### [2026-01-15] Phase 1 Completed
+**Action:** Implemented Backend Enforcement Design.
+**Outcome:**
+- Created `passcode_attempts` table (Migration `20260115_create_passcode_attempts`).
+- Implemented `src/lib/server/rate-limit.ts` with SHA-256 client hashing and lockout logic.
+- Integrated rate limiting into `/api/verify-passcode` (checks limit before DB verification).
+- Verified valid passcodes reset the counter.
+**Reference:** task.md verified.

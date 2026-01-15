@@ -25,15 +25,15 @@
 **Owner:** Backend Agent
 **Goal:** Define server-side schema and logic points.
 
-- [ ] **Enforcement Points:**
+- [x] **Enforcement Points:**
     - Identify where `passcode` verification currently happens (Supabase Edge Function or SvelteKit Server Action?).
     - Insert "Check Rate Limit" step *before* verification.
     - Insert "Increment Count" step *after* failure.
     - Insert "Reset Count" step *after* success.
-- [ ] **Storage Strategy:**
+- [x] **Storage Strategy:**
     - Use persisting table `passcode_attempts` (as defined in `requirements.md`).
     - Schema: `uuid`, `client_key`, `failed_count`, `locked_until`, `last_attempt_at`.
-- [ ] **Privacy Check:**
+- [x] **Privacy Check:**
     - Ensure `client_key` is a HASH (SHA-256), not raw IP.
     - Ensure 429 response does not hint at whether the UUID exists (timing safe if possible, but priority is functioning lockout).
 
