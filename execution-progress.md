@@ -11,7 +11,7 @@
 | :--- | :--- | :--- | :--- |
 | **Phase 0** | Spec & Testability Check | Orchestrator | ✅ Completed |
 | **Phase 1** | Backend Enforcement Design | Backend | ✅ Completed |
-| **Phase 2** | UI/UX Lockout Handling | Frontend | ⏳ Not Started |
+| **Phase 2** | UI/UX Lockout Handling | Frontend | ✅ Completed |
 | **Phase 3** | Automated Tests | QA | ⏳ Not Started |
 | **Phase 4** | Hardening & Regression Gate | QA/Backend | ⏳ Not Started |
 
@@ -41,4 +41,13 @@
 - Implemented `src/lib/server/rate-limit.ts` with SHA-256 client hashing and lockout logic.
 - Integrated rate limiting into `/api/verify-passcode` (checks limit before DB verification).
 - Verified valid passcodes reset the counter.
+**Reference:** task.md verified.
+
+### [2026-01-15] Phase 2 Completed
+**Action:** Implemented UI/UX Lockout Handling.
+**Outcome:**
+- Updated `src/routes/result/[id]/+page.svelte` to handle 429 responses.
+- Implemented `startLockoutTimer` to disable UI and show a countdown.
+- Added destructive `Alert` component to display "Too many failed attempts" with remaining time.
+- Ensured inputs and buttons are disabled during lockout.
 **Reference:** task.md verified.
