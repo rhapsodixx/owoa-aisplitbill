@@ -1,5 +1,6 @@
 <script lang="ts">
     import { fade, slide } from "svelte/transition";
+    import { onDestroy } from "svelte";
     import {
         Card,
         CardContent,
@@ -23,6 +24,7 @@
         EyeOff,
         Loader2,
         CreditCard,
+        Clock,
     } from "lucide-svelte";
     import { cn } from "$lib/utils";
     import { toast } from "svelte-sonner";
@@ -46,6 +48,11 @@
     let passcodeError: string | null = null;
     let isVerifying = false;
     let copiedPaymentInstruction = false;
+
+    // Lockout state
+    let isLocked = false;
+    let lockoutRemainingSeconds = 0;
+    let lockoutTimer: ReturnType<typeof setInterval>;
 
     const avatarColors = [
         "bg-red-500",
@@ -144,6 +151,33 @@
         }
     }
 
+    function startLockoutTimer(seconds: number) {
+        isLocked = true;
+        lockoutRemainingSeconds = seconds;
+        passcodeError = null; // Clear standard error in favor of lockout UI
+
+        if (lockoutTimer) clearInterval(lockoutTimer);
+
+        lockoutTimer = setInterval(() => {
+            lockoutRemainingSeconds--;
+            if (lockoutRemainingSeconds <= 0) {
+                clearInterval(lockoutTimer);
+                isLocked = false;
+                passcodeError = null; // Reset error state on unlock
+            }
+        }, 1000);
+    }
+
+    function formatTime(seconds: number): string {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, "0")}`;
+    }
+
+    onDestroy(() => {
+        if (lockoutTimer) clearInterval(lockoutTimer);
+    });
+
     async function verifyPasscode() {
         if (!passcodeInput.trim()) {
             passcodeError = "Please enter a passcode";
@@ -167,6 +201,12 @@
 
             const result = await response.json();
 
+            if (response.status === 429) {
+                // Handle lockout
+                startLockoutTimer(result.retryAfter || 60);
+                return;
+            }
+
             if (response.ok && result.success) {
                 isUnlocked = true;
                 toast.success("Access granted!");
@@ -181,7 +221,7 @@
     }
 
     function handlePasscodeKeydown(event: KeyboardEvent) {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && !isLocked) {
             verifyPasscode();
         }
     }
@@ -236,12 +276,13 @@
                             placeholder="Enter passcode"
                             bind:value={passcodeInput}
                             class="pr-10"
-                            disabled={isVerifying}
+                            disabled={isVerifying || isLocked}
                         />
                         <button
                             type="button"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                             on:click={() => (showPasscode = !showPasscode)}
+                            disabled={isLocked}
                         >
                             {#if showPasscode}
                                 <EyeOff class="h-4 w-4" />
@@ -252,7 +293,19 @@
                     </div>
                 </div>
 
-                {#if passcodeError}
+                {#if isLocked}
+                    <Alert
+                        variant="destructive"
+                        class="border-red-500 bg-red-500/10 text-destructive dark:text-red-400"
+                    >
+                        <Clock class="h-4 w-4" />
+                        <AlertTitle>Too many failed attempts</AlertTitle>
+                        <AlertDescription>
+                            Please wait {formatTime(lockoutRemainingSeconds)} before
+                            trying again.
+                        </AlertDescription>
+                    </Alert>
+                {:else if passcodeError}
                     <Alert variant="destructive">
                         <AlertTitle>Error</AlertTitle>
                         <AlertDescription>{passcodeError}</AlertDescription>
@@ -262,9 +315,12 @@
                 <Button
                     class="w-full gap-2"
                     on:click={verifyPasscode}
-                    disabled={isVerifying || !passcodeInput.trim()}
+                    disabled={isVerifying || !passcodeInput.trim() || isLocked}
                 >
-                    {#if isVerifying}
+                    {#if isLocked}
+                        <Clock class="h-4 w-4 animate-pulse" />
+                        Locked ({formatTime(lockoutRemainingSeconds)})
+                    {:else if isVerifying}
                         <Loader2 class="h-4 w-4 animate-spin" />
                         Verifying...
                     {:else}
