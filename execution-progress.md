@@ -13,7 +13,7 @@
 | **Phase 1** | Backend Enforcement Design | Backend | ✅ Completed |
 | **Phase 2** | UI/UX Lockout Handling | Frontend | ✅ Completed |
 | **Phase 3** | Automated Tests | QA | ✅ Completed |
-| **Phase 4** | Hardening & Regression Gate | QA/Backend | ⏳ Not Started |
+| **Phase 4** | Hardening & Regression Gate | QA/Backend | ✅ Completed |
 
 ---
 
@@ -62,3 +62,15 @@
 - Verified Counter Reset (success clears history).
 - Hardened tests with serial execution and specific selectors.
 **Reference:** tests/brute-force-protection.spec.ts verified.
+
+### [2026-01-15] Phase 4 Completed
+**Action:** Security Hardening & Regression Testing.
+**Outcome:**
+- Security Audit: Verified no plaintext passcodes in logs.
+- Hashing Verification: Confirmed SHA-256 usage for client identifiers.
+- Regression Tests:
+  - Created `tests/regression-split-bill.spec.ts` for end-to-end verification.
+  - Verified Public results load immediately (no regresssion).
+  - Verified Private results load correctly after passcode entry.
+- Note: Addressed Svelte 5 hydration/reactivity timing issues in E2E tests by adding delays and force-clicks.
+**Reference:** tests/regression-split-bill.spec.ts verified.
