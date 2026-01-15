@@ -12,7 +12,7 @@
 | **Phase 0** | Spec & Testability Check | Orchestrator | ✅ Completed |
 | **Phase 1** | Backend Enforcement Design | Backend | ✅ Completed |
 | **Phase 2** | UI/UX Lockout Handling | Frontend | ✅ Completed |
-| **Phase 3** | Automated Tests | QA | ⏳ Not Started |
+| **Phase 3** | Automated Tests | QA | ✅ Completed |
 | **Phase 4** | Hardening & Regression Gate | QA/Backend | ⏳ Not Started |
 
 ---
@@ -51,3 +51,14 @@
 - Added destructive `Alert` component to display "Too many failed attempts" with remaining time.
 - Ensured inputs and buttons are disabled during lockout.
 **Reference:** task.md verified.
+
+### [2026-01-15] Phase 3 Completed
+**Action:** Implemented Automated Tests.
+**Outcome:**
+- Created `tests/brute-force-protection.spec.ts` with 4 key scenarios.
+- Verified Progressive Lockout (5 failures -> Block).
+- Verified Lockout Persistence (valid passcode blocked during lockout).
+- Verified Client Isolation (independent tracking).
+- Verified Counter Reset (success clears history).
+- Hardened tests with serial execution and specific selectors.
+**Reference:** tests/brute-force-protection.spec.ts verified.
