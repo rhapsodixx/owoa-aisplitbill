@@ -10,13 +10,25 @@
   import { Badge } from "$lib/components/ui/badge";
   import { Utensils, Wine, Pencil } from "lucide-svelte";
   import { cn, formatCurrency, getAvatarColor } from "$lib/utils";
-  import type { Person, BillItem } from "$lib/types";
+  import type { Person } from "$lib/types";
 
   export let person: Person;
   export let index: number;
   export let onEditItem:
     | ((itemType: "food" | "drink", itemIndex: number) => void)
     | undefined = undefined;
+
+  function handleEditFood(itemIndex: number) {
+    if (onEditItem) {
+      onEditItem("food", itemIndex);
+    }
+  }
+
+  function handleEditDrink(itemIndex: number) {
+    if (onEditItem) {
+      onEditItem("drink", itemIndex);
+    }
+  }
 </script>
 
 <Card class="overflow-hidden transition-shadow hover:shadow-md">
@@ -77,7 +89,7 @@
                       variant="ghost"
                       size="icon"
                       class="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onclick={() => onEditItem("food", itemIndex)}
+                      on:click={() => handleEditFood(itemIndex)}
                     >
                       <Pencil class="h-3 w-3" />
                     </Button>
@@ -121,7 +133,7 @@
                       variant="ghost"
                       size="icon"
                       class="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onclick={() => onEditItem("drink", itemIndex)}
+                      on:click={() => handleEditDrink(itemIndex)}
                     >
                       <Pencil class="h-3 w-3" />
                     </Button>

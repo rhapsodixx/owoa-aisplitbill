@@ -5,7 +5,6 @@
     DialogHeader,
     DialogTitle,
     DialogFooter,
-    DialogClose,
   } from "$lib/components/ui/dialog";
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
@@ -81,14 +80,13 @@
     onsave(updatedItem);
   }
 
-  function handleOpenChange(isOpen: boolean) {
-    if (!isOpen) {
-      onclose();
-    }
+  function handleCancel() {
+    open = false;
+    onclose();
   }
 </script>
 
-<Dialog bind:open onOpenChange={handleOpenChange}>
+<Dialog bind:open>
   <DialogContent class="sm:max-w-[425px]">
     <DialogHeader>
       <DialogTitle>
@@ -145,10 +143,8 @@
     </div>
 
     <DialogFooter>
-      <DialogClose asChild let:builder>
-        <Button builders={[builder]} variant="outline">Cancel</Button>
-      </DialogClose>
-      <Button onclick={handleSave}>Save Changes</Button>
+      <Button variant="outline" on:click={handleCancel}>Cancel</Button>
+      <Button on:click={handleSave}>Save Changes</Button>
     </DialogFooter>
   </DialogContent>
 </Dialog>
