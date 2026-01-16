@@ -6,7 +6,7 @@
 | :---------- | :-------------------- | :---------------- | :--------------- |
 | **Phase 0** | Spec & Risk Alignment | Orchestrator + QA | ✅ Complete      |
 | **Phase 1** | Backend & Data Model  | Backend + Data    | ✅ Complete      |
-| **Phase 2** | Frontend Editing UX   | Frontend          | ⏳ Not Started   |
+| **Phase 2** | Frontend Editing UX   | Frontend          | ✅ Complete      |
 | **Phase 3** | Automated Testing     | QA                | ⏳ Not Started   |
 | **Phase 4** | Regression Gate       | QA + Orchestrator | ⏳ Not Started   |
 
@@ -78,3 +78,31 @@
 
 - ✅ TypeScript compilation passed (`npx tsc --noEmit`)
 - ⚠️ svelte-check has pre-existing Svelte 5 snippet type issues (not from this phase)
+
+---
+
+### [2026-01-16T22:32] Phase 2 Frontend Editing UX Complete
+
+**Action:** Verified Phase 2 implementation (previously unlogged).
+**Status:** ✅ Complete
+
+#### Files Created/Modified:
+
+- `src/lib/components/result/EditItemDialog.svelte` - Modal edit dialog with shadcn Dialog
+- `src/lib/components/result/PersonCard.svelte` - Edit buttons + "Edited" badge
+- `src/routes/result/[id]/+page.svelte` - Edit handlers and state management
+
+#### Requirements Met:
+
+- ✅ Modal editing via shadcn `Dialog`
+- ✅ Editable fields: Name, Price, Quantity
+- ✅ "Edited" badge using shadcn `Badge`
+- ✅ Validation with inline error messages
+- ✅ Proportional recalculation on save
+- ✅ Persistence via PATCH `/api/update-result`
+- ✅ Strict shadcn compliance verified
+
+#### Verification:
+
+- ✅ TypeScript compilation passed
+
