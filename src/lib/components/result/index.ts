@@ -4,3 +4,4 @@ export { default as PersonCard } from "./PersonCard.svelte";
 export { default as PaymentInstructionCard } from "./PaymentInstructionCard.svelte";
 export { default as ReceiptCard } from "./ReceiptCard.svelte";
 export { default as FloatingBottomBar } from "./FloatingBottomBar.svelte";
+export { default as EditItemDialog } from "./EditItemDialog.svelte";

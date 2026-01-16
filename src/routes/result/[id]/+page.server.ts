@@ -30,6 +30,7 @@ export const load: PageServerLoad = async ({ params }) => {
         resultId: id,
         visibility: data.visibility || 'public',
         isPrivate: (data.visibility === 'private'),
-        paymentInstruction: data.payment_instruction || null
+        paymentInstruction: data.payment_instruction || null,
+        feesTaxes: data.fees_taxes || null
     };
 };

@@ -7,6 +7,7 @@ import { hashPasscode } from '$lib/server/passcode';
 interface SplitBillRecord {
     id: string;
     result_data: object;
+    original_result_data: object;
     currency: string;
     person_breakdown: object;
     fees_taxes: object;
@@ -98,6 +99,7 @@ export const POST: RequestHandler = async ({ request }) => {
         const record: SplitBillRecord = {
             id: uuid,
             result_data: result,
+            original_result_data: result,  // Immutable AI snapshot
             currency: 'USD', // Default currency
             person_breakdown: result.people,
             fees_taxes: {
