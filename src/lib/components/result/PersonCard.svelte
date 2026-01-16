@@ -39,7 +39,7 @@
         <div
           class={cn(
             "flex h-10 w-10 items-center justify-center rounded-full text-white font-bold shadow-sm",
-            getAvatarColor(index)
+            getAvatarColor(index),
           )}
         >
           {person.name.charAt(0).toUpperCase()}
@@ -89,6 +89,7 @@
                       variant="ghost"
                       size="icon"
                       class="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Edit item"
                       on:click={() => handleEditFood(itemIndex)}
                     >
                       <Pencil class="h-3 w-3" />
@@ -133,6 +134,7 @@
                       variant="ghost"
                       size="icon"
                       class="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Edit item"
                       on:click={() => handleEditDrink(itemIndex)}
                     >
                       <Pencil class="h-3 w-3" />
