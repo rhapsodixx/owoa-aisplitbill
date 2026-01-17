@@ -1,108 +1,96 @@
 ---
 
-## Feature: Manual Editing of Extracted Receipt Items
+## Feature: Item Reassignment Selector (Exclude Current Assignee)
 
-| Phase       | Description           | Owner             | Status           |
-| :---------- | :-------------------- | :---------------- | :--------------- |
-| **Phase 0** | Spec & Risk Alignment | Orchestrator + QA | ✅ Complete      |
-| **Phase 1** | Backend & Data Model  | Backend + Data    | ✅ Complete      |
-| **Phase 2** | Frontend Editing UX   | Frontend          | ✅ Complete      |
-| **Phase 3** | Automated Testing     | QA                | ⏳ Not Started   |
-| **Phase 4** | Regression Gate       | QA + Orchestrator | ⏳ Not Started   |
+> **Parent Track:** Manual Editing of Extracted Receipt Items
+> **Reference:** [execution-plan.md](./execution-plan.md) (Section: Item Reassignment)
 
-### [2026-01-16] Feature Track Initiated
-
-**Action:** Initialized execution plan for Manual Editing feature.
-**Status:** Planning Phase Started.
-**Notes:**
-
-- Requirements validated from `requirements.md`.
-- Guard rails regarding AI re-execution and data persistence established.
+| Phase        | Description           | Owner             | Status         |
+| :----------- | :-------------------- | :---------------- | :------------- |
+| **Phase R0** | Requirements Lock     | Orchestrator + QA | ✅ Complete |
+| **Phase R1** | Backend/Data Contract | Backend + Data    | ✅ Complete |
+| **Phase R2** | Frontend Edit Mode UX | Frontend          | ⏳ Not Started |
+| **Phase R3** | Automated Tests       | QA                | ⏳ Not Started |
+| **Phase R4** | Regression Gate       | QA + Orchestrator | ⏳ Not Started |
 
 ---
 
-### [2026-01-16T21:35] Phase 0 Spec Analysis Complete
+### 2026-01-17 — Phase R1 Complete — Backend + Data
 
-**Action:** Completed Phase 0 requirements analysis and risk assessment.
-**Status:** Awaiting user approval.
+- **Action:** Verified backend data contract supports item reassignment
+- **Result:** No schema changes required, endpoint ready
+- **MCP used:** None
+- **Tests run:** None (verification phase)
+- **Outcome:** ✅ Phase R1 complete
 
-#### Spec Validation Completed:
+**Verification Results:**
 
-- ✅ Editable Fields: Name, Price, Quantity, Assignment
-- ✅ Non-Editable: Receipt image, tax/service fee lines
-- ✅ Recalculation: Immediate on edit (proportional allocation)
-- ✅ Persistence: `original_result_data` (immutable) + `result_data` (editable)
+| Component                  | Status      | Notes                                                     |
+| -------------------------- | ----------- | --------------------------------------------------------- |
+| `Person` structure         | ✅ Ready    | `name` identifies person, `foodItems`/`drinkItems` arrays |
+| `PATCH /api/update-result` | ✅ Ready    | Full `result_data` replacement, no LLM calls              |
+| Server-side validation     | ✅ Ready    | Person names, item structure validated                    |
+| Immutability               | ✅ Enforced | `original_result_data` never updated                      |
 
-#### Risks Identified:
-
-- ⚠️ **Schema Gap:** `original_result_data` column missing from DB
-- ⚠️ **Calculation Drift:** Must maintain proportional logic
-- ⚠️ **UI Complexity:** PersonCard needs edit mode restructure
-
-#### Gherkin Scenarios Defined:
-
-1. Edit Item Price → Totals Update
-2. Edit Item Name → Edited Badge Displayed
-3. Edit Item Quantity → Price Recalculates
-4. Edit Item Assignment → Per-person Subtotals Update
-5. Edited Values Persist After Reload
-6. Invalid Edits Blocked
-7. No AI Re-execution on Edit
-8. Original AI Data Remains Immutable
-
-#### LLM Guard Rails Confirmed:
-
-- ✅ No LLM invocation for validation
-- ✅ No LLM invocation for recalculation
-- ✅ Edits are authoritative overrides
+**Next Step:** Phase R2 — Add assignment selector to `EditItemDialog.svelte`
 
 ---
 
-### [2026-01-16T21:37] Phase 1 Backend Implementation Complete
+### 2026-01-17 — Phase R0 Complete — Orchestrator + QA
 
-**Action:** Implemented backend data model changes.
-**Status:** ✅ Complete
+- **Action:** Extracted acceptance criteria from `requirements.md` for Item Reassignment Selector
+- **Result:** All 8 Gherkin scenarios defined, acceptance criteria documented in `implementation_plan.md`
+- **MCP used:** None (requirements extraction phase)
+- **Tests run:** None (planning phase)
+- **Outcome:** ✅ Phase R0 complete, awaiting user approval
 
-#### Files Created:
+**Acceptance Criteria Extracted:**
 
-- `supabase/migrations/20260116_add_original_result_data.sql` - DB migration with backfill
-- `src/routes/api/update-result/+server.ts` - PATCH endpoint for saving edits
-- `src/lib/types.ts` - TypeScript type definitions
-- `src/lib/utils/recalculate.ts` - Client-side recalculation utility
+| Category          | Items Verified                                                          |
+| ----------------- | ----------------------------------------------------------------------- |
+| Selector Behavior | 6 rules (exclude current assignee, shadcn Select, edit mode only, etc.) |
+| Recalculation     | 6 expectations (proportional tax/fee, instant update, etc.)             |
+| Persistence       | 3 rules (result_data mutable, original_result_data immutable)           |
+| LLM Guard Rails   | 3 rules (no re-invocation, no validation, authoritative input)          |
 
-#### Files Modified:
+**Gherkin Scenarios (8 total):**
 
-- `src/routes/api/split-bill/+server.ts` - Added `original_result_data` to record
+1. Reassignment selector excludes current assignee
+2. Reassignment selector only visible in edit mode
+3. Reassigning item updates both persons' totals
+4. Reassigned item disappears from original person
+5. Reassigned item appears under new person
+6. Grand total unchanged after reassignment
+7. Reassignment persists after page reload
+8. No AI API call triggered by reassignment
 
-#### Verification:
+**Implementation Readiness:**
 
-- ✅ TypeScript compilation passed (`npx tsc --noEmit`)
-- ⚠️ svelte-check has pre-existing Svelte 5 snippet type issues (not from this phase)
+- `recalculate.ts` already supports proportional recalculation ✅
+- `types.ts` has required Person/BillItem structures ✅
+- `EditItemDialog.svelte` needs assignment selector added ⚠️
+- No database schema changes required ✅
+
+**Next Step:** Await user approval, then proceed to Phase R1 (Backend/Data Contract Readiness)
+
+**Recovery Notes:** N/A — no ambiguities found
 
 ---
 
-### [2026-01-16T22:32] Phase 2 Frontend Editing UX Complete
+### 2026-01-17 — Plan Created — Orchestrator
 
-**Action:** Verified Phase 2 implementation (previously unlogged).
-**Status:** ✅ Complete
+---
 
-#### Files Created/Modified:
+### Execution Log Template (for future use)
 
-- `src/lib/components/result/EditItemDialog.svelte` - Modal edit dialog with shadcn Dialog
-- `src/lib/components/result/PersonCard.svelte` - Edit buttons + "Edited" badge
-- `src/routes/result/[id]/+page.svelte` - Edit handlers and state management
+```md
+### YYYY-MM-DD — Phase RX — Owner
 
-#### Requirements Met:
-
-- ✅ Modal editing via shadcn `Dialog`
-- ✅ Editable fields: Name, Price, Quantity
-- ✅ "Edited" badge using shadcn `Badge`
-- ✅ Validation with inline error messages
-- ✅ Proportional recalculation on save
-- ✅ Persistence via PATCH `/api/update-result`
-- ✅ Strict shadcn compliance verified
-
-#### Verification:
-
-- ✅ TypeScript compilation passed
-
+- Action:
+- Result:
+- MCP used:
+- Tests run:
+- Outcome:
+- Next step:
+- Recovery notes:
+```

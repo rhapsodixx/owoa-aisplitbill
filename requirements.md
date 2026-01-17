@@ -191,28 +191,6 @@ The AI must return data that can be rendered into:
   - Allocated service fee
   - Final total payable
 
-#### Editable Receipt Items (NEW)
-
-Users MUST be able to manually edit the AI-extracted items on the Result Page.
-
-- **Initial State:** The AI-extracted output serves as the baseline.
-- **Editable Fields:**
-  - Item Name
-  - Item Price
-  - Quantity (if applicable)
-  - Individual Assignment (Who ate what)
-- **Non-Editable:**
-  - The original receipt image (Read-only)
-  - Derived tax/service fee lines (calculated values)
-  - Users cannot add purely new receipt images (only edit extracted data)
-
-**UI Rules (STRICT shadcn):**
-
-- Must use shadcn `Table` for the item list.
-- Editing can be inline (e.g., `Input` in cells) or via a `Dialog` (Modal).
-- Validation errors (e.g., negative price) must use shadcn `FormMessage`.
-- Visual indicator (e.g., "Edited" badge) MUST show for modified items.
-
 #### Calculation Rules (MANDATORY)
 
 - All taxes, service fees, and additional charges:
@@ -220,12 +198,6 @@ Users MUST be able to manually edit the AI-extracted items on the Result Page.
   - MUST be distributed **proportionally**, based on the value of food/drinks consumed by each person
 - No rounding assumptions unless explicitly stated by the AI
 - Final totals must be clearly shown per person
-- **Manual Edit Recalculation:**
-  - Any manual edit (price/quantity/assignment) MUST trigger **immediate recalculation** of:
-    - Per-person subtotals
-    - Allocated tax/service fees
-    - Final totals
-  - Calculations must follow the existing proportional allocation logic using the _new_ edited values.
 
 #### Presentation Requirements
 
@@ -281,6 +253,104 @@ Users MUST be able to manually edit the AI-extracted items on the Result Page.
   - Uses shadcn-friendly layout components (e.g., `AspectRatio`, `ScrollArea`)
 
     - Uses shadcn-friendly layout components (e.g., `AspectRatio`, `ScrollArea`)
+
+#### Editable Receipt Items (Manual Editing)
+
+Users MUST be able to manually edit AI-extracted receipt items on the Result Page (Page 2) while in **edit mode**.
+
+##### Edit Mode Activation
+
+- An **Edit** button MUST be visible on the result page
+- Clicking Edit activates **edit mode** for all editable fields
+- A **Save** button MUST be visible in edit mode to persist changes
+- A **Cancel** button MUST be visible to discard changes and exit edit mode
+- UI Components: shadcn `Button` for Edit/Save/Cancel
+
+##### Editable Fields (Per Item)
+
+The following fields MUST be editable in edit mode:
+
+| Field        | Edit Control    | Validation                                      |
+| ------------ | --------------- | ----------------------------------------------- |
+| `name`       | shadcn `Input`  | Required, max 100 characters                    |
+| `price`      | shadcn `Input`  | Required, positive number, max 2 decimal places |
+| `quantity`   | shadcn `Input`  | Required, positive integer, min 1               |
+| `assignment` | shadcn `Select` | Required, must be valid person in the bill      |
+
+##### Item Reassignment (Assignment Editing)
+
+In **edit mode**, users MUST be able to **reassign an item to a different person**.
+
+**Selector Rules (MANDATORY):**
+
+- The selector list MUST include:
+  - All other people in the bill
+- The selector list MUST NOT include:
+  - The currently assigned person (to avoid no-op edits)
+- The selector MUST:
+  - Have a clear label (e.g., "Reassign to" or "Assigned to")
+  - Default to the current assignment until user chooses
+
+**UI Rules (STRICT shadcn):**
+
+- Use shadcn `Select` or `Combobox` component
+- Validation messages must use shadcn `FormMessage`
+- Selector MUST only be visible in **edit mode**
+- The selector MUST show the person's name/identifier clearly
+
+##### Recalculation Rules (Immediate)
+
+When any item field is edited OR an item is reassigned:
+
+- The system MUST immediately recalculate:
+  - Per-person subtotal (sum of their items)
+  - Proportional tax allocation (based on subtotal ratio)
+  - Proportional service fee allocation (based on subtotal ratio)
+  - Final total per person
+  - Grand total (for verification)
+- Changes MUST be reflected instantly in the UI
+- No page reload required
+
+**Reassignment-Specific Behavior:**
+
+- When an item is reassigned:
+  - The item MUST be removed from the original person's breakdown
+  - The item MUST be added to the newly selected person's breakdown
+  - Both persons' totals MUST be recalculated
+
+##### Edited Item Indicator
+
+- Items that have been manually edited MUST display a visual indicator
+- Suggested: A small badge, icon, or subtle highlight
+- Indicator MUST persist until user reverts to original or data is reset
+
+##### UI Component Rules (STRICT shadcn)
+
+- All form inputs: shadcn `Input`, `Select`, `Combobox`
+- All validation errors: shadcn `FormMessage`
+- Edit/Save/Cancel buttons: shadcn `Button`
+- Modals (if used): shadcn `Dialog`
+- Inline editing preferred; modal editing acceptable as alternative
+
+##### Persistence Rules (Dual Storage)
+
+**The system MUST maintain two data snapshots:**
+
+| Field                  | Description                              | Mutability   |
+| ---------------------- | ---------------------------------------- | ------------ |
+| `original_result_data` | AI-generated result (immutable snapshot) | ❌ IMMUTABLE |
+| `result_data`          | Current state (reflects user edits)      | ✅ MUTABLE   |
+
+**On Save:**
+
+- Only `result_data` is updated with the edited values
+- `original_result_data` MUST remain unchanged
+- Reassignment is treated as a **manual edit override**
+
+**On Page Load:**
+
+- Display `result_data` (which may include user edits)
+- `original_result_data` available for future "Reset to Original" feature (not in scope)
 
 ---
 
@@ -384,20 +454,19 @@ All AI-generated split bill results MUST be persisted in Supabase.
 
 #### Result Record Schema
 
-| Field                  | Type      | Description                                              |
-| ---------------------- | --------- | -------------------------------------------------------- |
-| `id`                   | UUID (PK) | Cryptographically random UUID v4                         |
-| `result_data`          | JSON      | Current structured split bill result (Editable)          |
-| `original_result_data` | JSON      | Immutable snapshot of original AI output                 |
-| `currency`             | TEXT      | Currency code (e.g., "IDR", "USD")                       |
-| `person_breakdown`     | JSON      | Per-person allocation details                            |
-| `fees_taxes`           | JSON      | Allocated fees and taxes breakdown                       |
-| `receipt_image_url`    | TEXT      | Public or signed URL to the receipt                      |
-| `created_at`           | TIMESTAMP | Timestamp of record creation                             |
-| `ai_model_used`        | TEXT      | Identifier of the AI model used                          |
-| `visibility`           | TEXT      | 'public' OR 'private'                                    |
-| `passcode_hash`        | TEXT      | Hashed passcode (NULL if public)                         |
-| `payment_instruction`  | TEXT      | User-provided payment instruction (NULL if not provided) |
+| Field                 | Type      | Description                                              |
+| --------------------- | --------- | -------------------------------------------------------- |
+| `id`                  | UUID (PK) | Cryptographically random UUID v4                         |
+| `result_data`         | JSON      | Structured split bill result                             |
+| `currency`            | TEXT      | Currency code (e.g., "IDR", "USD")                       |
+| `person_breakdown`    | JSON      | Per-person allocation details                            |
+| `fees_taxes`          | JSON      | Allocated fees and taxes breakdown                       |
+| `receipt_image_url`   | TEXT      | Public or signed URL to the receipt                      |
+| `created_at`          | TIMESTAMP | Timestamp of record creation                             |
+| `ai_model_used`       | TEXT      | Identifier of the AI model used                          |
+| `visibility`          | TEXT      | 'public' OR 'private'                                    |
+| `passcode_hash`       | TEXT      | Hashed passcode (NULL if public)                         |
+| `payment_instruction` | TEXT      | User-provided payment instruction (NULL if not provided) |
 
 **Payment Instruction Storage Rules:**
 
@@ -564,12 +633,32 @@ The AI is responsible for:
 - Copy action copies the raw value exactly as entered
 - No AI processing or transformation is permitted
 
-### LLM Guard Rails for Manual Edits
+### LLM Guard Rails for Manual Editing & Reassignment (MANDATORY)
 
-- The LLM MUST **NOT** be re-invoked to validate or "fix" user manual edits.
-- Manual edits are treated as **authoritative overrides**.
-- The AI output is the **initial suggestion only**; the user's edit is the final truth.
-- The system MUST NOT infer user intent from edited values (no "smart" re-processing).
+> [!CAUTION]
+> Manual edits and item reassignments are **authoritative user input** and must NEVER trigger AI re-processing.
+
+**The LLM MUST NOT:**
+
+- Be re-invoked after any manual edit or item reassignment
+- Validate whether a manual edit "makes sense"
+- Validate whether a reassignment is "logical" or "correct"
+- Infer intent from editing or reassignment behavior
+- Process edited data as new input for re-analysis
+
+**The AI's Role:**
+
+- The AI is responsible for **initial extraction only**
+- Once the AI returns its result, all subsequent edits are:
+  - Stored deterministically
+  - Calculated deterministically
+  - Never re-processed by the AI
+
+**Authoritative User Input:**
+
+- Manual edits (name, price, quantity) are final
+- Item reassignments are final
+- All calculations post-edit use deterministic math, not AI inference
 
 ---
 
@@ -617,25 +706,6 @@ All scenarios below MUST be covered by automated tests:
 - Use Playwright MCP for clipboard assertions
 - Tests must NOT rely on live external services
 
-### Manual Edit Tests (Playwright + Gherkin)
-
-- **Scenario: Edit Item Price**
-
-  - Given the AI extracted "Burger" at 50,000
-  - When the user changes "Burger" price to 60,000
-  - Then the per-person total is immediately recalculated
-  - And the tax/service fees update proportionally
-
-- **Scenario: Persistence of Edits**
-
-  - Given the user modified an item
-  - When the page is reloaded
-  - Then the modified value is still displayed (not the AI original)
-
-- **Scenario: No AI Re-run**
-  - When a user edits an item
-  - Then no request is sent to the LLM API
-
 ### MCP Utilization Guidelines
 
 - **Context7 MCP:** Reference for libraries/docs.
@@ -678,6 +748,54 @@ All scenarios below MUST be covered by automated tests:
   - When User B (different IP/UA) accesses the same result
   - Then User B is NOT locked out and can enter the passcode
 
+### Editable Receipt Items Tests (Playwright + Gherkin)
+
+All scenarios below MUST be covered by automated tests:
+
+- **Edit Mode Activation:**
+
+  - Verify Edit button is visible on result page
+  - Verify clicking Edit activates edit mode
+  - Verify Save and Cancel buttons appear in edit mode
+  - Verify Cancel discards changes and exits edit mode
+
+- **Field Editing:**
+
+  - Verify item name can be edited and saved
+  - Verify item price can be edited and saved
+  - Verify item quantity can be edited and saved
+  - Verify validation errors prevent saving invalid data
+  - Verify edited items display visual indicator
+
+- **Item Reassignment:**
+
+  - Verify assignment selector is visible in edit mode
+  - Verify selector lists all other people (NOT current assignee)
+  - Verify reassigning an item updates both affected persons' totals
+  - Verify the reassigned item disappears from the original person
+  - Verify the reassigned item appears under the new person
+  - Verify the selector does NOT include the currently assigned person
+
+- **Recalculation:**
+
+  - Verify editing item price triggers recalculation of all totals
+  - Verify editing item quantity triggers recalculation of all totals
+  - Verify reassignment triggers recalculation of both persons' totals
+  - Verify tax/service fee is redistributed proportionally after edit
+
+- **Persistence:**
+
+  - Verify edited values persist after page reload
+  - Verify reassignment persists after page reload
+  - Verify `original_result_data` remains unchanged after edits
+  - Verify no AI API call is triggered by any edit or reassignment
+
+**Test Determinism Requirements:**
+
+- Use Supabase MCP for deterministic test data setup
+- Tests MUST follow `agents.md` conventions
+- Tests MUST use Playwright + Gherkin format
+
 ---
 
 ---
@@ -718,7 +836,6 @@ SUPABASE_SERVICE_ROLE_KEY=
 - History of past bills (Public)
 - Payments or payment integrations
 - More than 2 **Public** pages
-- Modification of the uploaded receipt image file (pixels)
 - **Public** Dashboards
 - **Public** Pagination or result listing
 - Social sharing SDKs
