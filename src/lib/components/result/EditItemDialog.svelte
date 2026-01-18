@@ -9,30 +9,47 @@
   import { Button } from "$lib/components/ui/button";
   import { Input } from "$lib/components/ui/input";
   import { Label } from "$lib/components/ui/label";
-  import type { BillItem } from "$lib/types";
+  import * as Select from "$lib/components/ui/select";
+  import type { BillItem, Person } from "$lib/types";
 
   // Props
   export let open = false;
   export let item: BillItem | null = null;
   export let itemType: "food" | "drink" = "food";
-  export let onsave: (updatedItem: BillItem) => void = () => {};
+  export let currentPersonName: string = "";
+  export let allPeople: Person[] = [];
+  export let onsave: (
+    updatedItem: BillItem,
+    newPersonName?: string
+  ) => void = () => {};
   export let onclose: () => void = () => {};
 
   // Form state
   let editName = "";
   let editPrice = 0;
   let editQuantity = 1;
+  let selectedPerson = "";
 
   // Validation errors
   let nameError: string | null = null;
   let priceError: string | null = null;
   let quantityError: string | null = null;
 
+  // Compute available people for reassignment (all except current)
+  $: availablePeople = allPeople.filter((p) => p.name !== currentPersonName);
+
+  // Compute display label for selected person
+  $: selectedLabel =
+    selectedPerson === currentPersonName
+      ? `${selectedPerson} (current)`
+      : selectedPerson || "Keep current assignment";
+
   // Sync form state when item changes
   $: if (item) {
     editName = item.name;
     editPrice = item.price;
     editQuantity = item.quantity ?? 1;
+    selectedPerson = currentPersonName; // Default to current assignment
     nameError = null;
     priceError = null;
     quantityError = null;
@@ -49,16 +66,12 @@
       valid = false;
     }
 
-    if (typeof editPrice !== "number" || isNaN(editPrice) || editPrice < 0) {
+    if (isNaN(+editPrice) || +editPrice < 0) {
       priceError = "Price must be a non-negative number";
       valid = false;
     }
 
-    if (
-      typeof editQuantity !== "number" ||
-      isNaN(editQuantity) ||
-      editQuantity < 1
-    ) {
+    if (isNaN(+editQuantity) || +editQuantity < 1) {
       quantityError = "Quantity must be at least 1";
       valid = false;
     }
@@ -72,12 +85,14 @@
     const updatedItem: BillItem = {
       ...item,
       name: editName.trim(),
-      price: editPrice,
-      quantity: editQuantity,
+      price: +editPrice,
+      quantity: +editQuantity,
       isEdited: true,
     };
 
-    onsave(updatedItem);
+    // Determine if reassignment is happening
+    const isReassigned = selectedPerson && selectedPerson !== currentPersonName;
+    onsave(updatedItem, isReassigned ? selectedPerson : undefined);
   }
 
   function handleCancel() {
@@ -140,6 +155,36 @@
           <p class="text-sm text-destructive">{quantityError}</p>
         {/if}
       </div>
+
+      <!-- Assignment Selector (only show if there are other people) -->
+      {#if availablePeople.length > 0}
+        <div class="grid gap-2">
+          <Label for="edit-assignment">Reassign to</Label>
+          <Select.Root type="single" bind:value={selectedPerson}>
+            <Select.Trigger id="edit-assignment" class="w-full">
+              <span>{selectedLabel}</span>
+            </Select.Trigger>
+            <Select.Content>
+              <!-- Current person (default, shown but indicates current) -->
+              <Select.Item
+                value={currentPersonName}
+                label={`${currentPersonName} (current)`}
+              >
+                {currentPersonName} (current)
+              </Select.Item>
+              <!-- Other people available for reassignment -->
+              {#each availablePeople as person}
+                <Select.Item value={person.name} label={person.name}>
+                  {person.name}
+                </Select.Item>
+              {/each}
+            </Select.Content>
+          </Select.Root>
+          <p class="text-xs text-muted-foreground">
+            Select a different person to reassign this item
+          </p>
+        </div>
+      {/if}
     </div>
 
     <DialogFooter>

@@ -59,6 +59,10 @@
   let editingItem: BillItem | null = null;
   let isSaving = false;
 
+  // Computed: current person name for edit dialog
+  $: editingPersonName =
+    editingPersonIndex >= 0 ? (people[editingPersonIndex]?.name ?? "") : "";
+
   let copied = false;
 
   function goBack() {
@@ -181,27 +185,59 @@
     editDialogOpen = true;
   }
 
-  async function handleSaveItem(updatedItem: BillItem) {
+  async function handleSaveItem(updatedItem: BillItem, newPersonName?: string) {
     if (editingPersonIndex < 0 || editingItemIndex < 0) return;
 
     isSaving = true;
 
     try {
       // Update local state
-      const updatedPeople = [...people];
-      const person = { ...updatedPeople[editingPersonIndex] };
+      const updatedPeople = [...people].map((p) => ({
+        ...p,
+        foodItems: [...p.foodItems],
+        drinkItems: [...p.drinkItems],
+      }));
 
-      if (editingItemType === "food") {
-        const updatedItems = [...person.foodItems];
-        updatedItems[editingItemIndex] = updatedItem;
-        person.foodItems = updatedItems;
+      const sourcePerson = updatedPeople[editingPersonIndex];
+      const sourceItems =
+        editingItemType === "food"
+          ? sourcePerson.foodItems
+          : sourcePerson.drinkItems;
+
+      // Check if reassignment is happening
+      if (newPersonName && newPersonName !== sourcePerson.name) {
+        // REASSIGNMENT: Move item from source to target person
+        const targetPersonIndex = updatedPeople.findIndex(
+          (p) => p.name === newPersonName
+        );
+        if (targetPersonIndex < 0) {
+          throw new Error(`Person "${newPersonName}" not found`);
+        }
+
+        // Remove item from source person
+        sourceItems.splice(editingItemIndex, 1);
+        if (editingItemType === "food") {
+          sourcePerson.foodItems = sourceItems;
+        } else {
+          sourcePerson.drinkItems = sourceItems;
+        }
+
+        // Add item to target person (same type: food or drink)
+        const targetPerson = updatedPeople[targetPersonIndex];
+        if (editingItemType === "food") {
+          targetPerson.foodItems = [...targetPerson.foodItems, updatedItem];
+        } else {
+          targetPerson.drinkItems = [...targetPerson.drinkItems, updatedItem];
+        }
       } else {
-        const updatedItems = [...person.drinkItems];
-        updatedItems[editingItemIndex] = updatedItem;
-        person.drinkItems = updatedItems;
+        // REGULAR EDIT: Update item in place
+        sourceItems[editingItemIndex] = updatedItem;
+        if (editingItemType === "food") {
+          sourcePerson.foodItems = sourceItems;
+        } else {
+          sourcePerson.drinkItems = sourceItems;
+        }
       }
-
-      updatedPeople[editingPersonIndex] = person;
 
       // Recalculate all totals
       const recalculated = recalculateProportional(
@@ -234,8 +270,14 @@
         throw new Error(errorData.error || "Failed to save changes");
       }
 
-      toast.success("Changes saved!", {
-        description: "The item has been updated.",
+      const message =
+        newPersonName && newPersonName !== people[editingPersonIndex]?.name
+          ? "Item reassigned successfully!"
+          : "Item updated successfully";
+      toast.success(message, {
+        description: newPersonName
+          ? `Moved to ${newPersonName}.`
+          : "The item has been updated.",
       });
 
       // Close dialog
@@ -346,6 +388,8 @@
   bind:open={editDialogOpen}
   item={editingItem}
   itemType={editingItemType}
+  currentPersonName={editingPersonName}
+  allPeople={people}
   onsave={handleSaveItem}
   onclose={handleCloseDialog}
 />
